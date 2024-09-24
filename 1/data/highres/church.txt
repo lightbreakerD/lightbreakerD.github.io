@@ -1,0 +1,2 @@
+Green displacement (x,y): (24 3)
+Red displacement (x,y): (58 -4)

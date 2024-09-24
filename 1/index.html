@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <title>Images of the Russian Empire</title>
+    <link rel="stylesheet" href="../styles.css">
+    <title>CS 180: Images of the Russian Empire</title>
+</head>
+
+<body>
+    <main class="">
+        <nav class="navbar navbar-expand-lg py-2 px-xl-5" style="z-index: 100;">
+
+            <div class="container-xxl d-flex align-items-lg-center justify-content-between">
+                <a class="navbar-brand" href="https://inst.eecs.berkeley.edu/~cs180/fa24/hw/proj1/">CS 180</a>
+                <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item ms-lg-3 dropdown">
+                            <a class="nav-link link-dark" href="/boyongwu/1/">Project 1</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/boyongwu/2/">Project 2</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/boyongwu/3/">Project 3</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/boyongwu/4/">Project 4</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/boyongwu/5/">Project 5</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/boyongwu/6/">Final Project</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container legal-text-block">
+            <h1 class="text-center">Project 1: <br> Colorizing the <br> Prokudin-Gorskii photo collection</h1>
+            <hr class="mb-5">
+            <p>
+                Sergey Prokudin-Gorsky was Russian photographer, who was known for his effort to document 20th century
+                Russia.
+            </p>
+            <p>He traveled Russia and took photos of a wide range of scenes, objects and people. 
+                Even though this was long before color photography, he had the idea to record every scene onto a glass plate with a red, blue and green filter each. 
+                This way he would capture the red, green and blue channels of a scene seperately. 
+            </p>
+            <p>
+                His plan was to use a projector with three different colors of lights, and project the three different
+                colored image plates
+                on top of each other, which would result in a color image.
+            </p>
+            <p>
+                These RGB glass plates survived and are currently in the possession of the Library of Congress. They have
+                digitized the negatives, which is what we are going to use in this project to create the color images out of it.
+            </p>
+            <ul>
+                <li><a href="#a">1. Single-scale implementation with successful results on low-res images</a></li>
+                <li><a href="#b">2. Multiscale pyramid version that works on large images</a></li>
+                <li><a href="#c">3. My Thoughts on this</a></li>
+            </ul>
+            <hr class="my-5">
+            <a class="anchor" id="a"></a>
+            <h3>1. Single-scale implementation with successful results on low-res images</h3>
+            <p>
+                In the following I want to walk through the process of taking the three different color images and
+                aligning them on top of each other correctly, to yield a clear color image.
+                We first start with lower resulution images in the first party and then will try our hand on larger, more detailed images.
+            </p>
+            <h4>1.1 Preparation of the Images</h4>
+            <p>
+                We start off with one low resolution jpg images, which are scans of the three different colored glass
+                plates stacked on top of each other.
+            </p>
+            <img src="data/cathedral.jpg" class="d-block mx-lg-auto img-fluid my-2 px-md-5">
+            <p>
+                Our first step is to slice them into 3 separate equal height images, so that we can project them on top of each other later.
+            </p>
+            <p>
+                The first image slice represents the blue glass plate, the second the green and the third the red glass
+                plate. 
+            </p>
+            <p>
+                Just slicing them and stacking them on top does not yield us with a satisfying result, since they are
+                misaligned:
+            </p>
+            <img src="data/lowres/missalligned.png" class="d-block mx-lg-auto img-fluid my-2 px-md-5">
+            <p>
+                We need to align the images correctly, but how do we decide whether 2 images are similar to each other?
+                The simplest method for the beginning is the following:
+            </p>
+            <h4>1.2 Finding the correct alignment</h4>
+            <p>
+                We can compare the intensity values of all the pixels using the NCC, to evaluate whether the images
+                match.
+                To search for a match we will just brute force the search, by np.roll(ing) the image inside a certain
+                range. This means we first determine a range of x and y values we want to shift our image with, 
+                then we test every pixel shift with the fixed blue image plate and compare the NCC values.
+                It is also possible to use the Euclidean loss, to evaluate whether the images match, but I found out
+                that for our case, NCC yielded better results.
+            </p>
+            <p>
+                One thing we do, before we apply the NCC, is cropping out the corners, since the border
+                of the glass plates don't yield us useful information. The borders don't allign and there is handwriting on them.
+                I have decided to crop out 15% of the image height and width starting from the edges. So the first 7.5% and last 7.5% of 
+                the height and width. This is an empirically derived value. I have introduced this as the 'crop' parameter of my method.
+                I calculated the NCC value of all the possible shifts in our search range, and selected the one with the best match.
+            </p>
+            <p>
+                As test range I have set 10% of our width and height. I am shifting our width and
+                height by -5% to 5% each, in search of the best intensity match. I have introduced this as the 'testrange' hyperparameter
+                of my method.
+                <br>
+                This is our result for the low resolution images:
+            </p>
+            <div class="accordion accordion-flush border-top border-bottom my-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faq-heading-1">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#faq1" style="background: none; box-shadow: none;">
+                            How is NCC used?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="collapse">
+                        <div class="accordion-body">
+                            NCC is the Normalized Cross-Correlation. It is not a loss, which means the higher this value
+                            is, the more similar the images are to each other.
+                            It is calculated by subtracting the mean of each image from its corresponding image first,
+                            dividing though its norm. Finally we take the dot product of both images (or image vectors).
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/lowres/cathedral_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Cathedral</h5>
+                            <p class="card-text">Green displacement (x,y): (5 2) <br>
+                                Red displacement (x,y): (12 3)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/lowres/tobolsk_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Tobolsk</h5>
+                            <p class="card-text">Green displacement (x,y): (3 3) <br>
+                                Red displacement (x,y): (6 3)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/lowres/monastery_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Monastery</h5>
+                            <p class="card-text">Green displacement (x,y): (-3 2) <br>
+                                Red displacement (x,y): (3 2)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-5">
+            <a class="anchor" id="b"></a>
+            <h3>2. Multiscale pyramid version that works on large images</h3>
+            <p>
+                Now our goal is to align the large images. Trying our previous method on very large images that have a
+                size of 3700x9700 takes too long.
+                I tried to run it just for fun, but even after 20 minutes, I could not get a result.
+
+            </p>
+            <h4>2.1 Image Pyramids</h4>
+            <p>
+                What we could do here, is using a image pyramid. We basically downscale our image N times and use the
+                same exact method from before to search for a match.
+                Then we do multiply the optimal shift we found by 2 and use the N-1 downscaled version of our image to
+                finetune our shift.
+            </p>
+            <img src="data/Image_pyramid.png" class="d-block mx-lg-auto img-fluid my-2 px-md-5">
+            <p>
+                We do that N times to find the optimal shift.
+                To get the optimal result, I have tried different testranges and
+                different crops. The goal was to crop as much as possible away to save compute while still maintaining a good
+                results. I also tried different layers of image pyramids (amount of upscales/downscales)
+            </p>
+            <h4>2.2 Finetuning variables and optimizations</h4>
+            <p>
+                I have received a good result with the following setting:
+            </p>
+            <p>
+                I scaled the image down 3 times (N=3) using a 3 layer image pyramid, used a testrange of testrange = 0.1 * 0.5 ** (N-Current_Layer)
+                and a crop of crop = 1-0.6 * 0.5 ** (N-Current_Layer).
+            </p>
+            <p>
+                Calculating the NCC value for so many pixels takes a long time on a single thread, which is why I used
+                pythons ThreadPoolExecutor() to use all the CPU cores of my laptop.
+                This is the result I ended up with:
+            </p>
+            <p>
+                All the images were pretty good except for the emir image, of the old gentleman sitting in a chair<br>
+                I have also provided the displacement of the green and red plates in regard to the blue plate under each
+                image
+
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/church_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Church</h5>
+                            <p class="card-text">Green displacement (x,y): (24 3) <br>
+                                Red displacement (x,y): (58 -4)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/emir.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Emir</h5>
+                            <p class="card-text">Green displacement (x,y): (48 23) <br>
+                                Red displacement (x,y): (-100 -48)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/harvesters.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Harvesters</h5>
+                            <p class="card-text">Green displacement (x,y): (59 19) <br>
+                                Red displacement (x,y): (123 16)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/icon_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Icon</h5>
+                            <p class="card-text">Green displacement (x,y): (41 18) <br>
+                                Red displacement (x,y): (89 23)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/lady_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Lady</h5>
+                            <p class="card-text">Green displacement (x,y): (54 6) <br>
+                                Red displacement (x,y): (113 10)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/melons_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Melons</h5>
+                            <p class="card-text">Green displacement (x,y): (83 9) <br>
+                                Red displacement (x,y): (179 12)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/onion_church_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Onion Church</h5>
+                            <p class="card-text">Green displacement (x,y): (50 26) <br>
+                                Red displacement (x,y): (107 37)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/sculpture_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Sculpture</h5>
+                            <p class="card-text">Green displacement (x,y): (33 -11) <br>
+                                Red displacement (x,y): (140 -27)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/self_portrait_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Self Portrait</h5>
+                            <p class="card-text">Green displacement (x,y): (77 29) <br>
+                                Red displacement (x,y): (175 37)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/three_generations_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Three Generations</h5>
+                            <p class="card-text">Green displacement (x,y): (49 15) <br>
+                                Red displacement (x,y): (109 11)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/highres/train_cropped.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Train</h5>
+                            <p class="card-text">Green displacement (x,y): (42 6) <br>
+                                Red displacement (x,y): (85 32)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a class="anchor" id="c"></a>
+            <hr class="my-5">
+            <h3>3. My Thoughts on this</h3>
+            <p>
+                While this yields good results, we still have one image, which is not alligned well. Despite using an image pyramid,
+                it is still very compute intensive to compare each individual pixel intensity.
+            </p>
+            <p>
+                To better and more efficiently allign the images we should consider some structural hints like edges, for which we can use
+                the simple sobel operator.
+            </p>
+        </div>
+
+
+    </main>
+    <footer class="my-3">
+        <div class="container-lg">
+            <hr>
+            <div style="font-size: .75rem">
+                <div class="text-muted">Please enroll me in the course 🌱</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+
+    </script>
+</body>
+
+</html>
