@@ -137,10 +137,13 @@ h3 {
     margin-bottom: 3rem;
 }
 
-
 a.anchor {
     display: block;
     position: relative;
     top: -4rem;
     visibility: hidden;
+}
+
+.font-monospace {
+    color: rgb(200, 110, 0);
 }

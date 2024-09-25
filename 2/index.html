@@ -7,15 +7,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-    <title>Images of the Russian Empire</title>
+    <title>Fun with Filters and Frequencies!</title>
     <link rel="stylesheet" href="../styles.css">
-    <title>CS 180: Images of the Russian Empire</title>
+    <title>Fun with Filters and Frequencies!</title>
+    <link rel="icon" type="image/png" href="../icon.png">
+
 </head>
 
 <body>
     <main class="">
         <nav class="navbar navbar-expand-lg py-2 px-xl-5" style="z-index: 100;">
-
             <div class="container-xxl d-flex align-items-lg-center justify-content-between">
                 <a class="navbar-brand" href="https://inst.eecs.berkeley.edu/~cs180/fa24/">CS 180</a>
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
@@ -44,98 +45,109 @@
         </nav>
 
         <div class="container legal-text-block">
-            <h1 class="text-center">Project 1: <br> Colorizing the <br> Prokudin-Gorskii photo collection</h1>
+            <h1 class="text-center">Project 2: <br> Fun with Filters and Frequencies!</h1>
             <hr class="mb-5">
             <p>
-                Sergey Prokudin-Gorsky was Russian photographer, who was known for his effort to document 20th century
-                Russia.
-            </p>
-            <p>He traveled Russia and took photos of a wide range of scenes, objects and people. 
-                Even though this was long before color photography, he had the idea to record every scene onto a glass plate with a red, blue and green filter each. 
-                This way he would capture the red, green and blue channels of a scene seperately. 
+                <b>Here is something fun: </b>Look at the image below, it looks like the girl is sticking out her
+                tongue, right?
             </p>
             <p>
-                His plan was to use a projector with three different colors of lights, and project the three different
-                colored image plates
-                on top of each other, which would result in a color image.
+                But if you look closer and enlarge it by klicking on the image, you will see that she is not actually
+                giving you the tongue.
+                You can actually even see her lower lip.
+            </p>
+
+            <div class="container my-4">
+                <img src="data/part1/tongue_final.png" class="img-thumbnail rounded mx-auto d-block" style="width: 25%;"
+                    data-bs-toggle="modal" data-bs-target="#imageModal">
+            </div>
+
+            <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <img src="data/part1/tongue_final.png" class="img-fluid">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Now look at the enlarged image and move away until you almost see her giving you the tongue, but not
+                quite.
+                If you look at her eyes at this distance, you can see her giving you the tongue from the corner of your
+                eyes,
+                but if you look at her mouth, her tongue disappears again.
             </p>
             <p>
-                These RGB glass plates survived and are currently in the possession of the Library of Congress. They have
-                digitized the negatives, which is what we are going to use in this project to create the color images out of it.
+                This is a fun example of how our brain can be tricked by the frequencies of an image. The image is a
+                combination
+                of a high-pass and low-pass filter, which we will learn about in this project.
+            </p>
+            <p>
+                Google also just recently released their new Pixel 9 phone, which has <a
+                    href="https://store.google.com/intl/en/ideas/articles/pixel-add-me/">the new feature Add Me</a>,
+                that gets everyone into a single photo, by combining 2 seperate photos of the same scene.
+            </p>
+            <p>
+                We will learn about how we can lay 2 images on top of each other using a mask, while creating a seamless
+                transition between them.
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/monies.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Here I took 2 pictures of my money and combined them into one image. <br>
+                                Now I can show off and pretend that I have 2 monies!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/monies_process.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                The process of creating the image above. I used a mask to combine the two images.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                <small>(Please don't use the images of people here anywhere else, thanks!)</small>
             </p>
             <ul>
-                <li><a href="#a">1. Single-scale implementation with successful results on low-res images</a></li>
-                <li><a href="#b">2. Multiscale pyramid version that works on large images</a></li>
+                <li><a href="#a">1. Fun with filters</a></li>
+                <li><a href="#b">2. Fun with Frequencies!</a></li>
                 <li><a href="#c">3. My Thoughts on this</a></li>
             </ul>
             <hr class="my-5">
             <a class="anchor" id="a"></a>
-            <h3>1. Single-scale implementation with successful results on low-res images</h3>
+            <h3>1. Fun with filters</h3>
+            <h4>1.1 Finite Difference Operator</h4>
             <p>
-                In the following I want to walk through the process of taking the three different color images and
-                aligning them on top of each other correctly, to yield a clear color image.
-                We first start with lower resulution images in the first party and then will try our hand on larger, more detailed images.
+                There is a way to detect edges by looking at the intensity differences of neighboring pixels.
+                We can use the Finite difference operator D_x = np.array([[1, -1]])
+                <!-- <span class="font-monospace">D_x = np.array([[1, -1]])</span> -->
+                and
+                <!-- <span class="font-monospace">D_y = np.array([[1], [-1]])</span> -->
+                D_y = np.array([[1], [-1]])
+                to detect the edges in the x and y direction, by convolving it with the image.
             </p>
-            <h4>1.1 Preparation of the Images</h4>
-            <p>
-                We start off with one low resolution jpg images, which are scans of the three different colored glass
-                plates stacked on top of each other.
-            </p>
-            <img src="data/cathedral.jpg" class="d-block mx-lg-auto img-fluid my-2 px-md-5">
-            <p>
-                Our first step is to slice them into 3 separate equal height images, so that we can project them on top of each other later.
-            </p>
-            <p>
-                The first image slice represents the blue glass plate, the second the green and the third the red glass
-                plate. 
-            </p>
-            <p>
-                Just slicing them and stacking them on top does not yield us with a satisfying result, since they are
-                misaligned:
-            </p>
-            <img src="data/lowres/missalligned.png" class="d-block mx-lg-auto img-fluid my-2 px-md-5">
-            <p>
-                We need to align the images correctly, but how do we decide whether 2 images are similar to each other?
-                The simplest method for the beginning is the following:
-            </p>
-            <h4>1.2 Finding the correct alignment</h4>
-            <p>
-                We can compare the intensity values of all the pixels using the NCC, to evaluate whether the images
-                match.
-                To search for a match we will just brute force the search, by np.roll(ing) the image inside a certain
-                range. This means we first determine a range of x and y values we want to shift our image with, 
-                then we test every pixel shift with the fixed blue image plate and compare the NCC values.
-                It is also possible to use the Euclidean loss, to evaluate whether the images match, but I found out
-                that for our case, NCC yielded better results.
-            </p>
-            <p>
-                One thing we do, before we apply the NCC, is cropping out the corners, since the border
-                of the glass plates don't yield us useful information. The borders don't allign and there is handwriting on them.
-                I have decided to crop out 15% of the image height and width starting from the edges. So the first 7.5% and last 7.5% of 
-                the height and width. This is an empirically derived value. I have introduced this as the 'crop' parameter of my method.
-                I calculated the NCC value of all the possible shifts in our search range, and selected the one with the best match.
-            </p>
-            <p>
-                As test range I have set 10% of our width and height. I am shifting our width and
-                height by -5% to 5% each, in search of the best intensity match. I have introduced this as the 'testrange' hyperparameter
-                of my method.
-                <br>
-                This is our result for the low resolution images:
-            </p>
-            <div class="accordion accordion-flush border-top border-bottom my-3">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="faq-heading-1">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#faq1" style="background: none; box-shadow: none;">
-                            How is NCC used?
-                        </button>
-                    </h2>
-                    <div id="faq1" class="collapse">
-                        <div class="accordion-body">
-                            NCC is the Normalized Cross-Correlation. It is not a loss, which means the higher this value
-                            is, the more similar the images are to each other.
-                            It is calculated by subtracting the mean of each image from its corresponding image first,
-                            dividing though its norm. Finally we take the dot product of both images (or image vectors).
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/cameraman.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Cathedral</h5> -->
+                            <p class="card-text">Original Image</p>
                         </div>
                     </div>
                 </div>
@@ -143,72 +155,311 @@
             <div class="row row-cols-1 row-cols-md-2 g-4">
                 <div class="col">
                     <div class="card">
-                        <img src="data/lowres/cathedral_cropped.jpg" class="card-img-top" alt="...">
+                        <img src="data/part1/convoluted_dx.png" class="card-img-top" alt="...">
                         <div class="card-body">
-                            <h5 class="card-title">Cathedral</h5>
-                            <p class="card-text">Green displacement (x,y): (5 2) <br>
-                                Red displacement (x,y): (12 3)</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/lowres/tobolsk_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Tobolsk</h5>
-                            <p class="card-text">Green displacement (x,y): (3 3) <br>
-                                Red displacement (x,y): (6 3)
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                Convoluted with dx, which are basically all the vertical edges
                             </p>
                         </div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card">
-                        <img src="data/lowres/monastery_cropped.jpg" class="card-img-top" alt="...">
+                        <img src="data/part1/convoluted_dy.png" class="card-img-top" alt="...">
                         <div class="card-body">
-                            <h5 class="card-title">Monastery</h5>
-                            <p class="card-text">Green displacement (x,y): (-3 2) <br>
-                                Red displacement (x,y): (3 2)
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                Convoluted with dy, which are basically all the horizontal edges
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
-            <hr class="my-5">
-            <a class="anchor" id="b"></a>
-            <h3>2. Multiscale pyramid version that works on large images</h3>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/grad_mag.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                We get our gradient magnitude image by taking the square root of the sum of the squares
+                                of the 2 convoluted dx dy images,
+                                like this:
+                                grad_mag = np.sqrt(convoluted_dx**2 + convoluted_dy**2)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/grad_mag_thresh.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                To make our image more clear, we can threshold it. We can set a threshold value, and if
+                                the gradient magnitude is above this value, we set it to 255 (which is white), else to
+                                0.
+                                As a threshold I found out that 60 works pretty well for this image.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>1.2 Derivative of Gaussian (DoG) Filter</h4>
             <p>
-                Now our goal is to align the large images. Trying our previous method on very large images that have a
-                size of 3700x9700 takes too long.
-                I tried to run it just for fun, but even after 20 minutes, I could not get a result.
+                The problem here, is that we still see some noise in the images in form of small white dots, which are
+                not edges.
+                What we could do is to blur the image first, to get rid of the noise. Here I just used a simple Gaussian
+                blur with
+                a kernel size of 5 and a sigma of 3. I used the blur before running the Finite Difference Operator.
+                We can use the following function to create a gaussian kernel:<br>
+                gaussian_kernel = cv2.getGaussianKernel(5,3).T * cv2.getGaussianKernel(5,3)
 
             </p>
-            <h4>2.1 Image Pyramids</h4>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/grad_mag_thresh_blurred.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                By blurring the image beforehand, we can see that the noise is gone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part1/dog_filter_result_thresh.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                We can simplify things by using just one convolution instead of two by making a
+                                derivative of Gaussian
+                                filters by convolving the Gaussian with D_x and D_y.<br>
+                                <span style="color:red">Verify that you get the same result as before!</span><br>
+                                As we can see, the result with the dog filter is almost the same as before.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p style="color:red">What differences do you see?</p>
             <p>
-                What we could do here, is using a image pyramid. We basically downscale our image N times and use the
-                same exact method from before to search for a match.
-                Then we do multiply the optimal shift we found by 2 and use the N-1 downscaled version of our image to
-                finetune our shift.
+                Okay this result is already pretty good. This is because we got rid of the noise that was in the grass
+                and
+                in some other parts of the image, that was caused by some pixels having a very different intensity then
+                its
+                surrounding pixels. this has now been cancelled out by blurrying the image a little.
             </p>
-            <img src="data/Image_pyramid.png" class="d-block mx-lg-auto img-fluid my-2 px-md-5">
             <p>
-                We do that N times to find the optimal shift.
-                To get the optimal result, I have tried different testranges and
-                different crops. The goal was to crop as much as possible away to save compute while still maintaining a good
-                results. I also tried different layers of image pyramids (amount of upscales/downscales)
+                What was very important here is that for creating the dog filter kernel, we used the mode full, so that
+                no information is lost. Full adds 0 padding, which means, that with our gaussian kernel of size 5x5, if
+                we apply the 1x2 D_x kernel on it for convolution, we will pad it on the left and right side with 0
+                each, so that it results in a 5x7. After that we apply the convolution with the D_x kernel, so that it
+                will end up as a 5x6 dx DoG Kernel. Same with D_y.
             </p>
-            <h4>2.2 Finetuning variables and optimizations</h4>
+            <hr class="my-5">
+            <a class="anchor" id="b"></a>
+            <h3>2. Fun with Frequencies!</h3>
+            <h4>2.1 Image "Sharpening"</h4>
             <p>
-                I have received a good result with the following setting:
+                We can use frequencies to create any image. The high frequencies often contain the image details whereas
+                the lower frequencies
+                contain the overall structure of the image. We can increase the high frequencies of an image to sharpen
+                an image.
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                Our original taj mahal image
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj_hf.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                This is the high frequency part of the image that we got, by blurring the image with a
+                                kernel size of 5 and a sigma of 3,
+                                and then subtracting the blurred image from the original image.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj_sharpened_05.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                We add the high frequency part to the original image to sharpen it.
+                                I use the formula: sharpened = original + alpha * high frequency part
+                                Here I have used a alpha of 0.5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj_sharpened_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                Here I have used a alpha of 1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj_sharpened_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                Here I have used a alpha of 2, which is the best result in my opition.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj_sharpened_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                Here I have used a alpha of 4, which feels too much.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Lets try it with an image of my choice
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/popcorn.webp" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                Here is our original image. If you find this image confusing, take a closer look, the
+                                girl is actually holding a bag of popcorn :D
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/popcorn_sharpened.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                Here I have used a alpha of 3. I feel like the bag of popcorn is more visible now.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Lets take the taj mahal image again and blur it. We then want to sharpen the blurred image and compare
+                it to the original image.
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj_blurry.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                We will now use this blurried version of the taj mahal image to sharpen it.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/blurried_taj_sharpened.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Tobolsk</h5> -->
+                            <p class="card-text">
+                                This is the result of sharpening our blurried image
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/taj.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <!-- <h5 class="card-title">Monastery</h5> -->
+                            <p class="card-text">
+                                This is the original image. If we compare the sharpened blurried image to our original
+                                image, we can see that
+                                the sharpening does not make the image quality better than the original image.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion accordion-flush border-top border-bottom my-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faq-heading-1">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#faq1" style="background: none; box-shadow: none;">
+                            Normalizing images
+                        </button>
+                    </h2>
+                    <div id="faq1" class="collapse">
+                        <div class="accordion-body">
+                            To display the images in a more clear way, I normalized the images by dividing the image by
+                            subtracting the minimum value of the image and dividing it by the maximum value - the
+                            minimum value of the image:<br>
+                            final-final.min())/(final.max()-final.min()
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>2.2 Hybrid Images</h4>
+            <p>
+                Lets try to create hybrid images as described in this <a
+                    href="http://olivalab.mit.edu/publications/OlivaTorralb_Hybrid_Siggraph06.pdf">SIGGRAPH 2006 paper
+                    by Oliva, Torralba, and Schyns</a>
+                Hybrid images are images that we interpret differently from the distance and from close up, because they
+                are a combination of low and high frequencies.
+                At a distance, we can only see the low frequencies, and from close up, we can see the high frequencies.
             </p>
             <p>
-                I scaled the image down 3 times (N=3) using a 3 layer image pyramid, used a testrange of testrange = 0.1 * 0.5 ** (N-Current_Layer)
-                and a crop of crop = 1-0.6 * 0.5 ** (N-Current_Layer).
+                We choose 2 images that we want to combine and blur one of them with a gaussian filter to get the low
+                frequencies. Here I choose a kernelsize = sigma * 6 + 1 like suggested in the lecture, but added a 1 to it
+                because I wanted my gaussian to have a peak in the middle, instead of a flat top.
             </p>
             <p>
-                Calculating the NCC value for so many pixels takes a long time on a single thread, which is why I used
-                pythons ThreadPoolExecutor() to use all the CPU cores of my laptop.
-                This is the result I ended up with:
+                For the derek and nutmeg hybrid image, I set the sigma to 9 and used derek as the low frequency image and
+                nutmeg as the high frequency image. Finally, I combined both images by adding the low frequency image to
+                the high frequency image and then dividing by 2.
             </p>
             <p>
                 All the images were pretty good except for the emir image, of the old gentleman sitting in a chair<br>
@@ -349,11 +600,13 @@
             <hr class="my-5">
             <h3>3. My Thoughts on this</h3>
             <p>
-                While this yields good results, we still have one image, which is not alligned well. Despite using an image pyramid,
+                While this yields good results, we still have one image, which is not alligned well. Despite using an
+                image pyramid,
                 it is still very compute intensive to compare each individual pixel intensity.
             </p>
             <p>
-                To better and more efficiently allign the images we should consider some structural hints like edges, for which we can use
+                To better and more efficiently allign the images we should consider some structural hints like edges,
+                for which we can use
                 the simple sobel operator.
             </p>
         </div>
@@ -365,8 +618,8 @@
             <hr>
             <div style="font-size: .75rem">
                 <div class="text-muted">Thanks for enrolling me in the course 🌱</div>
-                </div>
             </div>
+        </div>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
