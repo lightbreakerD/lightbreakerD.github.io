@@ -120,17 +120,24 @@
                     </div>
                 </div>
             </div>
+            <div class="card my-4">
+                <img src="data/part2/2_moneys_final.jpg" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        The result looks so real!
+                    </p>
+                </div>
+            </div>
             <p>
                 <small>(Please don't use the images of people here anywhere else, thanks!)</small>
             </p>
             <ul>
-                <li><a href="#a">1. Fun with filters</a></li>
+                <li><a href="#a">1. Fun with Filters</a></li>
                 <li><a href="#b">2. Fun with Frequencies!</a></li>
-                <li><a href="#c">3. My Thoughts on this</a></li>
             </ul>
             <hr class="my-5">
             <a class="anchor" id="a"></a>
-            <h3>1. Fun with filters</h3>
+            <h3>1. Fun with Filters</h3>
             <h4>1.1 Finite Difference Operator</h4>
             <p>
                 There is a way to detect edges by looking at the intensity differences of neighboring pixels.
@@ -444,8 +451,8 @@
 
             <h4>2.2 Hybrid Images</h4>
             <p>
-                Lets try to create hybrid images as described in this <a
-                    href="http://olivalab.mit.edu/publications/OlivaTorralb_Hybrid_Siggraph06.pdf">SIGGRAPH 2006 paper
+                Lets try to create hybrid images as described in this
+                <a href="http://olivalab.mit.edu/publications/OlivaTorralb_Hybrid_Siggraph06.pdf">SIGGRAPH 2006 paper
                     by Oliva, Torralba, and Schyns</a>
                 Hybrid images are images that we interpret differently from the distance and from close up, because they
                 are a combination of low and high frequencies.
@@ -453,165 +460,392 @@
             </p>
             <p>
                 We choose 2 images that we want to combine and blur one of them with a gaussian filter to get the low
-                frequencies. Here I choose a kernelsize = sigma * 6 + 1 like suggested in the lecture, but added a 1 to it
+                frequencies. Here I choose a kernelsize = sigma * 6 + 1 like suggested in the lecture, but added a 1 to
+                it
                 because I wanted my gaussian to have a peak in the middle, instead of a flat top.
             </p>
             <p>
-                For the derek and nutmeg hybrid image, I set the sigma to 9 and used derek as the low frequency image and
+                If the 2 images we want to combine are not the same size or are not alligned, we can use the
+                provided python script to resize and allign them beforehand. For that we only have to select 2 points in
+                each image that we want
+                to combine. The script will then allign the images by using the selected points.
+            </p>
+            <p>
+                For the derek and nutmeg hybrid image, I set the sigma to 9 (our cutoff frequency) and used derek as the
+                low frequency image and
                 nutmeg as the high frequency image. Finally, I combined both images by adding the low frequency image to
                 the high frequency image and then dividing by 2.
             </p>
+            <h5>Derek Nutmeg</h5>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/derek_nutmeg_high.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our high frequency image of nutmeg that has been correctly alligned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/derek_nutmeg_low.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our low frequency image of derek that has been correctly alligned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/derek_nutmeg.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our hybrid image of derek and nutmeg. If you look at it from a distance, you
+                                will
+                                see Derek, but if you look at it from close up, you will see the cat.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <p>
-                All the images were pretty good except for the emir image, of the old gentleman sitting in a chair<br>
-                I have also provided the displacement of the green and red plates in regard to the blue plate under each
-                image
+                Since we have IPhone releases every year and they barely change, I wanted to blend the different iPhone
+                14 and 15 models
+                together for fun, here is the result:
+            </p>
+            <h5>Is she sticking out her tongue? (Favorite)</h5>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/high_frequency_notongue.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our high frequency image of notongue image that has been correctly alligned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/blurry_image_tongue.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our low frequency image of tongue image that has been correctly alligned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card" data-bs-toggle="modal" data-bs-target="#imageModal">
+                        <img src="data/part2/tongue_final.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                (You can klick on this image to enlargen it) <br>
+                                This is our hybrid image of the tongue and no tongue image. If you look at it from a
+                                distance, you will
+                                see the girl sticking out the tongue, but if you look at it from close up, you will not
+                                see the tongue at all.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h5>2D fourier transform of the images</h5>
+            <p>
+                I could have grayscaled this but it looks so cool in color, so I kept it like this.
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/fou_high_freq_notongue.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our 2D fourier transform of the high frequency image notongue image
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/fou_low_freq_tongue.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our 2D fourier transform of the low frequency image tongue image
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/fou_final_tongue.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our 2D fourier transform of the final image tongue image
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h5>New or old iPhone?</h5>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/high_frequency_iphone.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our high frequency image of the old iPhone that has been correctly alligned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/blurry_image_iphone.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our low frequency image of the new iPhone that has been correctly alligned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/iphone_final.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our final hybrid image, is it the new or the old iPhone?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h5>Is this the Ikea shark?</h5>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/shark_high_frequency.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Ikea shark!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/shark_blurry_image.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Real shark!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/shark_final.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our final hybrid image, is it the Ikea shark or the real shark?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h5>Bells and Whisles regarding color</h5>
+            <p>
+                I have actually tried to use color to enhance this effect, both on the high frequency component and also
+                on
+                the low frequency component. From my observations, I can say that adding color makes the hybrid image
+                effact not
+                as good as black and white images. I kept all my previous results in black and white because I think
+                they give the
+                better results. The reason being that black and white leaves more for the imagination and color makes
+                some parts of the
+                image appear weird and abnormal.
+            </p>
+            <p>
+                Here is my favorite result with the girl sticking out her tongue, but with color:
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/part2/tongue_color_final.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This time we convolve and combine the high and low frequencies over all three color
+                                channels
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                While in black and white, the part under the girls lower lip appears normal, the shade we can attribute
+                to maybe a shadow or part of her chin,
+                the color adds more realizim and makes the part under her lower lip appear weird, since it is tongue
+                colored.
+            </p>
 
-            </p>
-            <div class="row row-cols-1 row-cols-md-1 g-4">
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/church_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Church</h5>
-                            <p class="card-text">Green displacement (x,y): (24 3) <br>
-                                Red displacement (x,y): (58 -4)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/emir.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Emir</h5>
-                            <p class="card-text">Green displacement (x,y): (48 23) <br>
-                                Red displacement (x,y): (-100 -48)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/harvesters.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Harvesters</h5>
-                            <p class="card-text">Green displacement (x,y): (59 19) <br>
-                                Red displacement (x,y): (123 16)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row row-cols-1 row-cols-md-1 g-4">
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/icon_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Icon</h5>
-                            <p class="card-text">Green displacement (x,y): (41 18) <br>
-                                Red displacement (x,y): (89 23)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/lady_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Lady</h5>
-                            <p class="card-text">Green displacement (x,y): (54 6) <br>
-                                Red displacement (x,y): (113 10)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/melons_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Melons</h5>
-                            <p class="card-text">Green displacement (x,y): (83 9) <br>
-                                Red displacement (x,y): (179 12)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row row-cols-1 row-cols-md-1 g-4">
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/onion_church_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Onion Church</h5>
-                            <p class="card-text">Green displacement (x,y): (50 26) <br>
-                                Red displacement (x,y): (107 37)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/sculpture_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Sculpture</h5>
-                            <p class="card-text">Green displacement (x,y): (33 -11) <br>
-                                Red displacement (x,y): (140 -27)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/self_portrait_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Self Portrait</h5>
-                            <p class="card-text">Green displacement (x,y): (77 29) <br>
-                                Red displacement (x,y): (175 37)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row row-cols-1 row-cols-md-1 g-4">
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/three_generations_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Three Generations</h5>
-                            <p class="card-text">Green displacement (x,y): (49 15) <br>
-                                Red displacement (x,y): (109 11)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card">
-                        <img src="data/highres/train_cropped.jpg" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">Train</h5>
-                            <p class="card-text">Green displacement (x,y): (42 6) <br>
-                                Red displacement (x,y): (85 32)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <a class="anchor" id="c"></a>
-            <hr class="my-5">
-            <h3>3. My Thoughts on this</h3>
+            <h4>2.3 Gaussian and Laplacian Stacks</h4>
             <p>
-                While this yields good results, we still have one image, which is not alligned well. Despite using an
-                image pyramid,
-                it is still very compute intensive to compare each individual pixel intensity.
+                Here we will try to blend 2 images together using gaussian and laplacian stacks and also a mask.
+                We use a multi resolution blending as described in this <a
+                    href="http://persci.mit.edu/pub_pdfs/spline83.pdf">paper</a>
+                by Burt and Adelson. We use an image spline to join 2 images together by gently distorting them. We
+                blend them together
+                at their different frequencies to creat a much smoother seam.
+                We want to create a gaussian and laplacian stack first, with which we can blend the 2 images together.
             </p>
             <p>
-                To better and more efficiently allign the images we should consider some structural hints like edges,
-                for which we can use
-                the simple sobel operator.
+                The gaussian stack is created by blurring the image with a gaussian filter. I use a stack size of 6
+                images,
+                convolute them with a gaussian filter with a sigma = (i + 1) * 2, with i being the index of the stack.
+                I set the kernel size to be kernelsize = sigma * 6 + 1.
             </p>
+            <p>
+                To create the laplacian stack I take the ith gaussian layer of the stack and calculate
+                the laplacian stack using stacked_gau[i] - stacked_gau[i + 1]. <br>
+                We end up with a laplacian stack of size 6 too.
+            </p>
+            <p>
+                Then we apply the same method, we created the gaussian stack with, to the mask. This mask gives us
+                information
+                on how strongly to blend the 2 images together. We use the following calculation to blend the 2 left and
+                right images together:<br>
+                left = apple_stack_lap[i] * half_mask_stack_gau[i]<br>
+                right = orange_stack_lap[i] * (1 - half_mask_stack_gau[i])<br>
+                final = left + right
+            </p>
+            <p>
+                The left and middle columns show the original apple and orange images weighted by the mask.
+            </p>
+            <div class="card my-4">
+                <img src="data/part2/6_masks.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is the mask we are using, that has been convoluted iteratively with the gaussian filter.
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/6_l0.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is level 0, the high frequency part of our laplacian stack.
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/6_l2.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is level 2, the mid frequency part of our laplacian stack.
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/6_l4.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is level 4, the low frequency part of our laplacian stack.
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/6_l5.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is level 5, the lowest frequency part of our laplacian stack.
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/6_final.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is our final blended image.
+                    </p>
+                </div>
+            </div>
+            <h5>The Oranapplewatermelon</h5>
+            <p>
+                Let's try it with an irregular filter and my favorite fruit, the watermelon and create a
+                Oranapplewatermelon:
+            </p>
+            <div class="card my-4">
+                <img src="data/part2/irr_round_mask.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is the mask we are using, that has been convoluted iteratively with the gaussian filter.
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/irr_round_orapple.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        Our Oranapple Laplacian stack
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/irr_round_watermelon.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        Our Watermelon Laplacian stack
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/irr_round_final.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is our final blended image.
+                    </p>
+                </div>
+            </div>
+            <h5>2 Monies</h5>
+            <p>
+                Having money is great but what if we had 2 monies? Lets take 2 photos of our money in 2 different places
+                and use a mask to fuse the together, so that it appears as if we have 2 monies!
+            </p>
+            <div class="card my-4">
+                <img src="data/part2/moneymask.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        This is the mask we are using
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/2_monies_process.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        After running the same process as before...
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part1/monies.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        We end up with 2 monies!
+                    </p>
+                </div>
+            </div>
+            <div class="card my-4">
+                <img src="data/part2/2_moneys_final.jpg" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <p class="card-text">
+                        The result looks so real!
+                    </p>
+                </div>
+            </div>
         </div>
-
-
     </main>
     <footer class="my-3">
         <div class="container-lg">
@@ -619,7 +853,6 @@
             <div style="font-size: .75rem">
                 <div class="text-muted">Thanks for enrolling me in the course 🌱</div>
             </div>
-        </div>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
