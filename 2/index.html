@@ -194,6 +194,7 @@
                                 of the 2 convoluted dx dy images,
                                 like this:
                                 grad_mag = np.sqrt(convoluted_dx**2 + convoluted_dy**2)
+                                and end up with our gradient magnitude shown above.
                             </p>
                         </div>
                     </div>
@@ -326,7 +327,7 @@
                         <div class="card-body">
                             <!-- <h5 class="card-title">Monastery</h5> -->
                             <p class="card-text">
-                                Here I have used a alpha of 1
+                                Here I have used a alpha of 1 to sharpen it
                             </p>
                         </div>
                     </div>
@@ -340,7 +341,7 @@
                         <div class="card-body">
                             <!-- <h5 class="card-title">Tobolsk</h5> -->
                             <p class="card-text">
-                                Here I have used a alpha of 2, which is the best result in my opition.
+                                Here I have used a alpha of 2 to sharpen it, which is the best result in my opition.
                             </p>
                         </div>
                     </div>
@@ -351,7 +352,7 @@
                         <div class="card-body">
                             <!-- <h5 class="card-title">Monastery</h5> -->
                             <p class="card-text">
-                                Here I have used a alpha of 4, which feels too much.
+                                Here I have used a alpha of 4 to sharpen it, which feels too much.
                             </p>
                         </div>
                     </div>
@@ -589,7 +590,12 @@
                     </div>
                 </div>
             </div>
-            <h5>New or old iPhone?</h5>
+            <h5>New or old iPhone? (Failure)</h5>
+            <p>
+                This is a failure, this hybrid image is not as good as the others. I feel like the reason is that
+                the 2 base images are to clear and don't have any features, the combined notch of the hybrid image at the top just looks kind of weird.
+                I think its better to use base images that have a lot more features, for creating hybrid images.
+            </p>
             <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
                 <div class="col">
                     <div class="card">
@@ -845,6 +851,14 @@
                     </p>
                 </div>
             </div>
+            <h4>The most important thing I learned</h4>
+            <p>
+                While I learned a lot about manipulating images, how images are displayed and can be sharpened or
+                combined by playing with frequencies, I think that the most important thing that I learned is that
+                things are easier than they seem. I always thought image processing was very complex, but after learning
+                about the principles and how it works, it is actually easier than I thought, once you understand the
+                basics.
+            </p>
         </div>
     </main>
     <footer class="my-3">
