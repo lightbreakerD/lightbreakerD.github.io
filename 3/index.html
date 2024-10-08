@@ -63,12 +63,12 @@
                 </div>
                 <div class="col">
                     <div class="card">
-                        <img id="gifFrame" src="data/morphed/the_morph_sequence.gif" class="card-img-top" >
+                        <img id="gifFrame" src="data/morphed/the_morph_sequence.gif" class="card-img-top">
                         <div class="card-body">
                             <p class="card-text">
-                                
+
                                 <label for="slider" class="form-label">Morphing Slider</label>
-                                <input type="range" id="slider" class="form-range" min="0" max="44">                
+                                <input type="range" id="slider" class="form-range" min="0" max="44">
                             </p>
                         </div>
                     </div>
@@ -103,8 +103,8 @@
                 For this I used a
                 tool called <a href="https://cal-cs180.github.io/fa23/hw/proj3/tool.html">Correspondence Tool</a> which
                 allows me to easily
-                define corresponding points. I used this tool to define about 60 corresponding points on my face and the
-                face of Taylor Swift.
+                define corresponding points. I used this tool to define about 60 corresponding points on my face and
+                Taylor Swift's face.
             </p>
             <img src="data/img1.png" class="img-fluid">
             <p>
@@ -218,8 +218,8 @@
                 morphed_im = morph(im1, im2, im1_pts, im2_pts, tri, warp_frac, dissolve_frac)
             </p>
             <p>
-                We choose the a frame rate of 30 frames per second and create 45 frames between 0 and 1, our result is
-                the following
+                I choose a frame rate of 30 frames per second and created 45 frames between 0 and 1, our result is
+                the following animation. Use the slider to see the morphing process.
             </p>
             <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
                 <div class="col">
@@ -237,12 +237,12 @@
                 </div>
                 <div class="col">
                     <div class="card">
-                        <img id="gifFrame" src="data/morphed/the_morph_sequence.gif" class="card-img-top" >
+                        <img id="gifFrame2" src="data/morphed/the_morph_sequence.gif" class="card-img-top">
                         <div class="card-body">
                             <p class="card-text">
-                                
+
                                 <label for="slider" class="form-label">Morphing Slider</label>
-                                <input type="range" id="slider" class="form-range" min="0" max="44">                
+                                <input type="range" id="slider2" class="form-range" min="0" max="44">
                             </p>
                         </div>
                     </div>
@@ -261,39 +261,184 @@
                     </div>
                 </div>
             </div>
-
-            <div id="gifContainer">
-                <img id="gifFrame" src="data/morphed/morphed_0.png" alt="GIF frame" width="400">
+            <hr>
+            <h3>Part 4: The "mean" face of the population</h3>
+            <p>
+                Here we want to compute the average face of a population of faces. For this, used a face dataset of 37
+                danish people
+                provided by the DTU. Since the facial keypoints were alread annotated, I could directly use them to
+                compute the average face.
+                To calculate the average shape, I just added all the points individual points together and divided them
+                by the number of faces.
+                Then I warped all the faces into the average shape and averaged the colors of the triangles together.
+            </p>
+            <p>
+                Here are some of the danish faces, which I have morphed into the average danish face shape of the
+                database. On the left slide
+                you can see the original image and on the right side the warped image:
+            </p>
+            <img src="data/danes/dane04.jpg" class="img-fluid">
+            <img src="data/danes/dane05.jpg" class="img-fluid">
+            <img src="data/danes/dane06.jpg" class="img-fluid">
+            <img src="data/danes/dane07.jpg" class="img-fluid">
+            <img src="data/danes/dane08.jpg" class="img-fluid">
+            <img src="data/danes/dane09.jpg" class="img-fluid">
+            <img src="data/danes/dane10.jpg" class="img-fluid mb-5">
+            <p>
+                Here we can see the "average" face of the danish "population":
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4 justify-content-center align-items-center">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/danes/average_dane.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                The average danish face
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                I have also warped my face into the shape of the average danish face and warped the average danish face
+                into my face shape and got the following somewhat disturbing result:
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/danes/me_with_danish_shape.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Me with the average danish face shape<br>
+                                (I actually look like a friend of mine ahaha)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/danes/dane_with_my_shape.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                The average danish face with my face shape
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h3>Part 5: Caricatures: Extrapolating from the Mean</h3>
+            <p>
+                We can produce a caricature of my face by extrapolating from the mean face, what we calculated in the 
+                previous part. To do this, we need to choose alphas that are outside of our [0,1] range. Here I choose
+                some alphas larger than 1, to increase the feature prominence of the population mean face on my face.
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/danes/me_with_danish_shape1_5.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Alpha = 1.5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/danes/me_with_danish_shape2.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Alpha = 2
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/danes/me_with_danish_shape2_4.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Alpha = 2.4
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h3>Bells and Whistles 1: Gender Change</h3>
+            <p>
+                Here I changed the gender of my face. I'm showing the morphing of just the shape, just the appearance and both:
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/genderchange_shape_only.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gender change shape only
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/genderchange_appearance_only.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gender change appearance only
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/genderchange_both.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gender change both appearance and shape
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <label for="slider" class="form-label">Morph</label>
-                <input type="range" id="slider" class="form-range" min="0" max="44">
-            </div>
+
+
+
+
+
+
+        </div>
 
     </main>
     <footer class="my-3">
         <div class="container-lg">
             <hr>
             <div style="font-size: .75rem">
-                <div class="text-muted">Hi 🌱</div>
+                <div class="text-muted">Hi :) 🌱</div>
             </div>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
-        
+
 
     </script>
     <script>
         const slider = document.getElementById('slider');
         const gifFrame = document.getElementById('gifFrame');
 
-        // Update the image based on the slider value
-        slider.addEventListener('input', function() {
+        slider.addEventListener('input', function () {
             const frameNumber = this.value;
             gifFrame.src = `data/morphed/morphed_${frameNumber}.png`;  // Replace with actual frame images
+        });
+
+        const slider2 = document.getElementById('slider2');
+        const gifFrame2 = document.getElementById('gifFrame2');
+
+        slider2.addEventListener('input', function () {
+            const frameNumber = this.value;
+            gifFrame2.src = `data/morphed/morphed_${frameNumber}.png`;  // Replace with actual frame images
         });
     </script>
 </body>
