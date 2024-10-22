@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <title>Stitching Photo Mosaics</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" type="image/png" href="../icon.png">
+
+</head>
+
+<body>
+    <main class="">
+        <nav class="navbar navbar-expand-lg py-2 px-xl-5" style="z-index: 100;">
+            <div class="container-xxl d-flex align-items-lg-center justify-content-between">
+                <a class="navbar-brand" href="https://inst.eecs.berkeley.edu/~cs180/fa24/">CS 180</a>
+                <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item ms-lg-3 dropdown">
+                            <a class="nav-link link-dark" href="/1/">Project 1</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/2/">Project 2</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/3/">Project 3</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/4/">Project 4</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/5/">Project 5</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/6/">Final Project</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container legal-text-block">
+            <h1 class="text-center">Project 4: <br>Stitching Photo Mosaics</h1>
+            <hr class="mb-5">
+            <p>
+                This project is about stitching together many different photos of the same scene into a single bigger
+                mosaic.
+                In the first part we will warp and composite some photographs that we have taken, create some panoramas
+                but using hand picked correspondances.
+                In the second part we will introduce a way to automatically find correspondances between images and
+                stitch them together.
+            </p>
+            <h2>Part A: Image Warping and Mosaicing</h2>
+            <hr>
+            <h3>Part 1 and 2: Shoot and digitize pictures; Recover homographies</h3>
+            <p>
+                Here are some images I have used for this project. I have marked the corner points of the objects in the
+                image I want to retify.
+                For the first image, we are going to rectify a symbol that is on the roof of the building.
+                For the second image, we are going to rectify a table that we are viewing form an angle.
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im1.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the first image we are going to rectfy.
+                                Goal is to rectify the symbol on the roof
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im3.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is our second image we are going to rectify, we want to try to rectify the table
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <img src="data/im1.jpg" class="img-fluid m-0 p-0">
+
+            <p>
+                Our first task here is to find the homographies that map the points in the first image to the points of
+                our target. For the
+                symbol on the roof, we want to warp the points that I have marked in the image 1 shown above, into a
+                rectangle with the points (0,0), (0,200), (100,0), (100,200).
+            </p>
+            <p>
+                To find the points we have to solve the first solve for this equation. Where the Homography matrix are
+                the Values H11 to H33, where H33 just has the value 1.
+                <br>
+            </p>
+            <img src="data/im6.png" class="img-fluid m-0 p-0">
+            <p>
+                The homography matrix is a 3x3 matrix that maps the points from one image to another. We can solve this
+                equation by using the least squares method.
+                Here u1 and v1 are the x and y coordinates of the points in the source image and u2 and v2 are the
+                points in the destination image.
+                We have only listed the equation for 4 points here, but we can extend this to more points.
+            </p>
+            <img src="data/im5.png" class="img-fluid m-0 p-0">
+            <h3>Part 3 and 4: Warp the Images; Image Rectification</h3>
+            <p>
+                Once we have the H, we can just apply it to our first image and get the rectified result:
+            </p>
+            <p>
+                Oh wait, we still have to do the warping. For the warping function, I used the same method I also used
+                during project 3
+                I am using an inverse warp and am using nearest neighbor interpolation.
+            </p>
+            <p>
+                Now we can warp it to see our result:
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im1.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the first image we are going to rectfy.
+                                Goal is to rectify the symbol on the roof
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im2.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the first image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im3.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the first image we are going to rectfy.
+                                We want to see the table from above
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im4.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Part 5: Blend the images into a mosaic</h3>
+
+            <hr>
+            <p>
+                To create the mosaic, we have to blend the two images together. For that I first calculated the
+                destination of the warped corners of our source
+                image and then I created a destination image, that is big enough to fit both images. I basically have to
+                increase the
+                destination image size by applying new_width = int(max_width - min_width) and new_height =
+                int(max_height - min_height).
+                The homography matrix also needs to be appended with a translation of this amount.
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/im7.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our mask, where we can see the part where the two images overlap
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                This mask actually did not work so well, which is why I returned to using laplacian blending from our project 3 to blend the borders.
+            </p>
+            <p>
+                I then used an inverse warp from the last part of the task to warp both images onto each other.
+                In the parts where the overlap I used a simple mask to alpha blend the images together.<br>
+                In the following I am showing different 3 mosaics, obtained by using the described blending technique:
+            </p>
+
+            <h5>First Example: Great Hall</h5>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic1_l.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the first image we are going to rectfy.
+                                We want to see the table from above
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic1_r.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic1_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5>Second Example: Homework</h5>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic2_l.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the first image we are going to rectfy.
+                                We want to see the table from above
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic2_r.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic2.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5>Third Example: iHouse</h5>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic3_l.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the first image we are going to rectfy.
+                                We want to see the table from above
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic3_r.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic3.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the rectification of the second image my warping using the homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+        </div>
+
+    </main>
+    <footer class="my-3">
+        <div class="container-lg">
+            <hr>
+            <div style="font-size: .75rem">
+                <div class="text-muted">By Boyong Wu 🌱</div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+
+    </script>
+    <script>
+        const slider = document.getElementById('slider');
+        const gifFrame = document.getElementById('gifFrame');
+
+        slider.addEventListener('input', function () {
+            const frameNumber = this.value;
+            gifFrame.src = `data/morphed/morphed_${frameNumber}.png`;  // Replace with actual frame images
+        });
+
+        const slider2 = document.getElementById('slider2');
+        const gifFrame2 = document.getElementById('gifFrame2');
+
+        slider2.addEventListener('input', function () {
+            const frameNumber = this.value;
+            gifFrame2.src = `data/morphed/morphed_${frameNumber}.png`;  // Replace with actual frame images
+        });
+    </script>
+</body>
+
+</html>
