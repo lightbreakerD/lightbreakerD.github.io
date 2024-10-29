@@ -194,7 +194,8 @@
                 </div>
             </div>
             <p>
-                This mask actually did not work so well, which is why I returned to using laplacian blending from our project 3 to blend the borders.
+                This mask actually did not work so well, which is why I returned to using laplacian blending from our
+                project 3 to blend the borders.
             </p>
             <p>
                 I then used an inverse warp from the last part of the task to warp both images onto each other.
@@ -262,7 +263,7 @@
                 </div>
                 <div class="col">
                     <div class="card">
-                        <img src="data/mosaic2.jpg" class="card-img-top" alt="...">
+                        <img src="data/mosaic2_final.jpg" class="card-img-top" alt="...">
                         <div class="card-body">
                             <p class="card-text">
                                 This is the rectification of the second image my warping using the homography matrix
@@ -297,7 +298,7 @@
                 </div>
                 <div class="col">
                     <div class="card">
-                        <img src="data/mosaic3.jpg" class="card-img-top" alt="...">
+                        <img src="data/mosaic3_final.jpg" class="card-img-top" alt="...">
                         <div class="card-body">
                             <p class="card-text">
                                 This is the rectification of the second image my warping using the homography matrix
@@ -306,7 +307,119 @@
                     </div>
                 </div>
             </div>
-
+            <h2 class="mt-5">Part B: Feature Matching for Auto-Stitching</h2>
+            <hr>
+            <p>
+                The goal in our second part is to implement a system that can automatically find correspondances between
+                feature points
+                and stich together the images automatically.
+            </p>
+            <h3>Part 1: Harris interest point detector</h3>
+            <p>
+                We will first use the Harris interest point detector to find the feature points in the image. We can use
+                the
+                corner_harris, peak_local_max functions from skimage.feature to find the feature points. With the peak
+                local max function's
+                threshold left at 1, we do get a lot of interest points, that are our preliminary "corners" found by the
+                Harris detector.:
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/hall1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our original image of the hall
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/harris_points.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Interesting points found by the Harris detector
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h3>Part 2: Adaptive Non-Maximal Suppression</h3>
+            <p>
+                Here we see that there are a lot of points, some are just very close to each other. We can use the
+                adaptive non-maximal suppression
+                which is a method to reduce the number of points by only keeping the points that are the most
+                interesting inside a sertain radius,
+                supressing points that are not the maximum in that radius. This way we can get strong points that are
+                also evenly spaced out throughout the image:
+            </p>
+            <img src="data2/formula1.png" class="card-img-top" alt="...">
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/harris_points_lessdense.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                I have reduced the amout of points detected using the harris detector, previous was way
+                                too much and took too long
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/anms.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                The result of applying non maximum suppression to the harris points
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h3>Part 3: Feature Descriptor extraction</h3>
+            <p>
+                Now its time to extract the feature descriptors, which are the small windows around the feature points.
+                Here we basically choose a 40x40 pixel window and then downscale it by picking every 5th pixel, to a 8x8
+                window.
+                This way we can better compare it with other feature descriptors so our second image.
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/feature descriptor.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is basically how one of our feature descriptors looks like, its an 8x8 patch<br>
+                                (I could have choosen cmap grey but this looks cooler)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h3>Part 3.1: Implement feature matching</h3>
+            <p>
+                Now we have the feature descriptors and have to find the right matching feature descriptors in both images.
+                For this purpose we first calculate the feature discriptors for both images and then we flatten these descriptors
+                to one vector. Now we can use the L2 distance to calculate the similarity or distance between them.
+            </p>
+            <p>
+                To find good matching features we want to select features that have a clear match, basically the distance to the 
+                first nearest neighbour should be small, but the distance to the second nearest neighbour should be big.
+                We use the ratio of the distance to the first and second nearest neighbour to find the best matches (as 
+                described in the paper) and end up with the following result:
+            </p>
+            <img src="data2/Matching_features.png" class="card-img-top" alt="...">
+            <p>
+                Here I am choosing the top 25 points and the result is insanely good actually. I was desperately debugging the code
+                but actually just mixed up the x and y coordinates, so I'm very very happy with the result. The code also runs very fast.
+            </p>
+            <h3>Part 4: RANSAC</h3>
+            <p>
+                Finally we want to implement RANSAC to find the best homography matrix that maps the points from one image to the other.
+                
+            </p>
 
 
 
