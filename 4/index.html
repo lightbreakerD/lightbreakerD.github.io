@@ -417,14 +417,109 @@
             </p>
             <h3>Part 4: RANSAC</h3>
             <p>
-                Finally we want to implement RANSAC to find the best homography matrix that maps the points from one image to the other.
-                
+                Finally, we want to implement RANSAC to find the best homography matrix that maps the points from one image to the other.
+                Our method is as follows <br>
+                1. Select 4 features and compute the exact homography<br>
+                2. Compute inliers that are within a threshold. The threshold is emperically choosen<br>
+                3. Repeat 1-2. We repeat these step a set of times to find the best homography<br>
+                4. Return the homography with the most inliers<br>
+            </p>
+            <p>
+                We basically randomly select 4 matching feature points, that we received from the previous step and then calculate the homography.
+                Then we use this homography to warp all the points, then we calcualate the distance between the warped points and the corredspoding points in the second image.
+                We use a threshold that I have choosen emperically to find the inliers. Inliers are points that are within this threshold.
+                We loop this process a set of times and then return the homography with the most inliers.
+                This way, we can ignore some of the extreme outliers and find the best homography that maps the points from one image to the other.
+            </p>
+            <p>
+                This is the result of the RANSAC method, which has choosen the 4 best point pairs to calculate the final homography matrix with.
+            </p>
+            <img src="data2/4pointpairs.png" class="card-img-top" alt="...">
+
+            <p>
+                We end up with the following result (which I am comparing to the manual picked correspondances, I got from Part A):
             </p>
 
-
-
-
-
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic1_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mosaic of the hall using manually chosen correspondances and homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/ransac_mosaic1_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mosaic of the hall using RANSAC chosen correspondances and homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic2_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mosaic of the library using manually chosen correspondances and homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/ransac_mosaic2_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mosaic of the library using RANSAC chosen correspondances and homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/mosaic3_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mosaic of the iHouse using manually chosen correspondances and homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/ransac_mosaic3_final.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mosaic of the iHouse using RANSAC chosen correspondances and homography matrix
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Here I used the laplacian blending the project 2 to blend the 2 images together. Compared to the manually chosen
+                correspondances, the RANSAC method works very well. It is as good as the manual correspondances, but way faster.
+            </p>
+            <h3>What I have learned</h3>
+            <p>
+                I often use the panorama feature on my phone to take panorama shots. I did not think that creating panorama shots was this easy.
+                I learned how to choose features, then create feature descriptors, match features and then use RANSAC to find the best homography matrix by ignoring outliers.
+            </p>
+            <p>
+                It was very interesting to see how well the homography matrix could rectify parts of images that were taken from different angles.
+                Another very interesting observation was how well matching the feature descriptors worked, using the ration of the distance to the first and second nearest neighbour,
+                which RANSAC further improved on to remove any outliers.
+            </p>
 
 
         </div>
