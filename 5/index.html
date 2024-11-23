@@ -1991,7 +1991,7 @@
                         <div class="card-body">
                             <p class="card-text">
                                 Close up: A pencil (high frequency)<br>
-                                Far away: A rocket ship (low frequency)                                
+                                Far away: A rocket ship (low frequency)
                         </div>
                     </div>
                 </div>
@@ -2007,13 +2007,451 @@
                 </div>
             </div>
             <p>
-                For the last image, since both prompts are similar and can coexist, the image became an oil painting of people around a campfire in a snowy mountain village.
+                For the last image, since both prompts are similar and can coexist, the image became an oil painting of
+                people around a campfire in a snowy mountain village.
             </p>
             <h2 class="mt-5">Part B: Diffusion Models from Scratch!</h2>
             <hr>
             <h3>Part 1: Training a Single-Step Denoising U-Net</h3>
             <h4>1.1 Implementing the UNet</h4>
+            <p>
+                First we want to create a single step denoiser. We train a model to take a noisy image z as an imput and
+                output the denoised image x.
+                We use the following loss function:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd id="mjx-eqn:B.1">
+                            <mtext>(B.1)</mtext>
+                        </mtd>
+                        <mtd>
+                            <mi>L</mi>
+                            <mo>=</mo>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="double-struck">E</mi>
+                                </mrow>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>z</mi>
+                                    <mo>,</mo>
+                                    <mi>x</mi>
+                                </mrow>
+                            </msub>
+                            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                            <msub>
+                                <mi>D</mi>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>&#x3B8;</mi>
+                                </mrow>
+                            </msub>
+                            <mo stretchy="false">(</mo>
+                            <mi>z</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>&#x2212;</mo>
+                            <mi>x</mi>
+                            <msup>
+                                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                                <mn>2</mn>
+                            </msup>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                We implemented the following U-Net architecture in pytorch for our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/unconditional_arch.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Unconditional Unet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                This Unconditional Unet is made up of the following simple and composed operations:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/atomic_ops_new.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Standard UNet Operations
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                The blocks perform the following operations:<br>
+                (1) Conv is a convolutional layer that doesn't change the image resolution, only the channel
+                dimension.<br>
+                (2) DownConv is a convolutional layer that downsamples the tensor by 2.<br>
+                (3) UpConv is a convolutional layer that upsamples the tensor by 2.<br>
+                (4) Flatten is an average pooling layer that flattens a 7x7 tensor into a 1x1 tensor. 7 is the resulting
+                height and width after the downsampling operations.<br>
+                (5) Unflatten is a convolutional layer that unflattens/upsamples a 1x1 tensor into a 7x7 tensor.<br>
+                (6) Concat is a channel-wise concatenation between tensors with the same 2D shape. This is simply
+                torch.cat().<br>
+                (7) ConvBlock, is similar to Conv but includes an additional Conv. Note that it has the same input and
+                output shape as (1) Conv.<br>
+                (8) DownBlock, is similar to DownConv but includes an additional ConvBlock. Note that it has the same
+                input and output shape as (2) DownConv.<br>
+                (9) UpBlock, is similar to UpConv but includes an additional ConvBlock. Note that it has the same input
+                and output shape as (3) UpConv.<br>
+            </p>
+            <h4>1.2 Using the UNet to Train a Denoiser</h4>
+            <p>
+                To use the Unet to train a denoiser, we first add noise to our MINST images in the following way:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd id="mjx-eqn:B.2">
+                            <mtext>(B.2)</mtext>
+                        </mtd>
+                        <mtd>
+                            <mi>z</mi>
+                            <mo>=</mo>
+                            <mi>x</mi>
+                            <mo>+</mo>
+                            <mi>&#x3C3;</mi>
+                            <mi>&#x3F5;</mi>
+                            <mo>,</mo>
+                            <mstyle scriptlevel="0">
+                                <mspace width="1em"></mspace>
+                            </mstyle>
+                            <mtext>where&#xA0;</mtext>
+                            <mi>&#x3F5;</mi>
+                            <mo>&#x223C;</mo>
+                            <mi>N</mi>
+                            <mo stretchy="false">(</mo>
+                            <mn>0</mn>
+                            <mo>,</mo>
+                            <mi>I</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>.</mo>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                Here are the resulting noisy images, that were generated using different sigmas:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Varying levels of noise on MNIST digits
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Now we can finally start training our model using the previously noised images.
+                We use a sigma noise level of 0.5, a batch size of 256 and trained for 5 epochs.
+                We also use a hidden dimension of D=128 and a learning rate of 1e-4.
+            </p>
+            <p>
+                We get the following loss curve (I used tensorboard for some visualizations):
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Loss curve for the training of the denoiser visualized in Tensorboard(Steps on x axis)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                For the first and 5th epoch we get the following results:
+                (The left column shows the ground truth, the middle column shows the noisy input images and the right
+                column the denoised output)
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Result after 1 epoch
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Result after 5 epochs
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>Out-of-Distribution Testing</p>
+            <p>
+                Our model was trained on images, that have added noise of 0.5. We can now try to denoise images that
+                were generated with a different amount of noise. Here we visualize the results on various levels of
+                noise from 0 to 1:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Results on digits from the test set with varying noise levels.
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <h3>Part 2: Training a Single-Step Denoising U-Net</h3>
+            <p>
+                Now we can start with diffusion and we will orient ourselves on the <a
+                    href="https://arxiv.org/abs/2006.11239">Denoising Diffusion Probabilistic Models</a> paper.
+            </p>
+            <p>
+                We first have to make a small change to our model. Instead of predicting the denoised image x, we will
+                try
+                to predict the
+                added noise to the image:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd>
+                            <mi>L</mi>
+                            <mo>=</mo>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="double-struck">E</mi>
+                                </mrow>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>&#x3F5;</mi>
+                                    <mo>,</mo>
+                                    <mi>z</mi>
+                                </mrow>
+                            </msub>
+                            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                            <msub>
+                                <mi>&#x3F5;</mi>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>&#x3B8;</mi>
+                                </mrow>
+                            </msub>
+                            <mo stretchy="false">(</mo>
+                            <mi>z</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>&#x2212;</mo>
+                            <mi>&#x3F5;</mi>
+                            <msup>
+                                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                                <mn>2</mn>
+                            </msup>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                Here
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <msub>
+                        <mi>&#x3F5;</mi>
+                        <mi>&#x3B8;</mi>
+                    </msub>
+                </math>
+                is the unet that outputs the predicted noise
+            </p>
+            <p>
+                And since we saw in part A already, that one step denoising is not as good as iterative denoising, we
+                will
+                use iterative denoising
+                in this part, with a T of 300, to improve our results.
+            </p>
+            <h4>2.1 Adding Time Conditioning to UNet</h4>
+            <p>
+                There are many ways to inject out timestep T into our unet model, we are adjusting our unet and use a
+                fully
+                connected
+                block to add the time conditioning into our unet:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_1_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our New Unet with the time conditioning
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_1_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our Fully Connected block
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.2 Training the UNet</h4>
+            <p>
+                After adjusting our unet architecture we can now begin to train our unet.
+                We use the following algorithm, to train our unet for 20 epochs in total, with a batch size of 128
+                and a hidden dimension of 64.
+                For the optimizer we use a learning rate of 1e-3 and a learning rate decay of 0.1^(1.0*num_epochs).
+                The algorithm we are using can be seen in the next image:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_2_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm 1: Training time-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Training the model for 20 epochs, we get the following loss curve:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_2_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Loss curve for the training of the time-conditioned unet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.3 Sampling from the UNet</h4>
+            <p>
+                Since the model is trained now, we can now try to sample some images from the model.
+                We sample some numbers from epoch 5 and 20.
+            </p>
+            <p>
+                We use the following sampling algorithm to sample from our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_3_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm 2: Sampling from time-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                We can see that the result improves with more epochs,
+                the images look more like numbers, but they still don't exactly look perfect, some look like
+                combinations of different numbers:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_3_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample result after epoch 5
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_3_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample result after epoch 20
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.4 Adding Class-Conditioning to UNet</h4>
+            <p>
+                We can now add class conditioning to our model. We can use the class conditioning to improve the
+                performance of our model, telling it which number is which, and at the same time giving us more control
+                during sampling.
+
+            </p>
+            <p>
+                Since we still want our model to work, even when there is no class conditioning, we implement a dropout,
+                where it drops our
+                class conditioning to 0, 10% of the time.
+            </p>
+            <p>
+                We use the follwing method to add our class conditioning to the model:
+                <small>
+                    fc1_t = FCBlock(...)<br>
+                    fc1_c = FCBlock(...)<br>
+                    fc2_t = FCBlock(...)<br>
+                    fc2_c = FCBlock(...)<br><br>
+
+                    t1 = fc1_t(t)<br>
+                    c1 = fc1_c(c)<br>
+                    t2 = fc2_t(t)<br>
+                    c2 = fc2_c(c)<br><br>
+
+                    # Follow diagram to get unflatten.<br>
+                    # Replace the original unflatten with modulated unflatten.<br>
+                    unflatten = c1 * unflatten + t1<br>
+                    # Follow diagram to get up1.<br>
+                    ...<br>
+                    # Replace the original up1 with modulated up1.<br>
+                    up1 = c2 * up1 + t1<br>
+                    # Follow diagram to get the output.
+                </small>
+            </p>
+            <p>
+                We can use the following algorithm to train our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_4_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm: Training class-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Training yields us with the following loss curve this time:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_4_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Loss curve for the training of the class-conditioned unet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.5 Sampling from the Class-Conditioned UNet</h4>
 
 
 
