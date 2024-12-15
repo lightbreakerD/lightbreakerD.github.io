@@ -1,0 +1,3516 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <title>Neural Radiance Field</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" type="image/png" href="../icon.png">
+
+</head>
+
+<body>
+    <main class="">
+        <nav class="navbar navbar-expand-lg py-2 px-xl-5" style="z-index: 100;">
+            <div class="container-xxl d-flex align-items-lg-center justify-content-between">
+                <a class="navbar-brand" href="https://inst.eecs.berkeley.edu/~cs180/fa24/">CS 180</a>
+                <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item ms-lg-3 dropdown">
+                            <a class="nav-link link-dark" href="/1/">Project 1</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/2/">Project 2</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/3/">Project 3</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/4/">Project 4</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/5/">Project 5</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link link-dark" href="/6/">Final Project</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container legal-text-block">
+            <h1 class="text-center">Final Project: <br>Neural Radiance Field!</h1>
+            <hr class="mb-5">
+            <p>
+                In this final project, we are going to implement Neural Radiance Field from scratch<br>
+                Newer methods like Gaussian Splatting have made things faster and improved the quality of
+                rendering. But by creating NeRF
+                step by step, we will really get a feel for how it works, like how volume rendering is handled,
+                position encodings, and how to train a neural network to reconstruct a scene. Plus, it will give us a
+                solid
+                understanding of the basics.
+                Same as our last project, we will split this project into two parts.
+            </p>
+            <h2>Part 1: Fit a Neural Field to a 2D Image</h2>
+            <hr>
+            <p>
+                Before we jump into implementing a real NeRF though, we will first try it out on a 2D image.
+                Nerf is basically a neural network that has learned a 3D scene, each "weight" is a spot in the 3D space
+                that
+                has a color and an opacity. Color and opacity is the output of our model, and the input is the 3D
+                position of
+                the point we want to render and the viewing direction.
+            </p>
+            <p>
+                Since we are starting with 2D, we first just create a model that only takes 2D input, so the xy
+                coordinates of the image.
+                It then returns the rgb color of the pixel.
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_1.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our 2D neural network architecture
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Our architecture is a simple feedforward neural network with 3 hidden layers. We use ReLU as our
+                activation function, but
+                we also use a Sinusoidal Positional Encoding (PE), which expands its dimensionality and tells our model
+                where in the image the pixel is located.
+            </p>
+            <p>
+                We also keep the original input in the PE so the formulation is:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mi>P</mi>
+                <mi>E</mi>
+                <mo stretchy="false">(</mo>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo>=</mo>
+                <mo fence="false" stretchy="false">{</mo>
+                <mi>x</mi>
+                <mo>,</mo>
+                <mi>s</mi>
+                <mi>i</mi>
+                <mi>n</mi>
+                <mo stretchy="false">(</mo>
+                <msup>
+                    <mn>2</mn>
+                    <mn>0</mn>
+                </msup>
+                <mi>&#x3C0;</mi>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo>,</mo>
+                <mi>c</mi>
+                <mi>o</mi>
+                <mi>s</mi>
+                <mo stretchy="false">(</mo>
+                <msup>
+                    <mn>2</mn>
+                    <mn>0</mn>
+                </msup>
+                <mi>&#x3C0;</mi>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo>,</mo>
+                <mi>s</mi>
+                <mi>i</mi>
+                <mi>n</mi>
+                <mo stretchy="false">(</mo>
+                <msup>
+                    <mn>2</mn>
+                    <mn>1</mn>
+                </msup>
+                <mi>&#x3C0;</mi>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo>,</mo>
+                <mi>c</mi>
+                <mi>o</mi>
+                <mi>s</mi>
+                <mo stretchy="false">(</mo>
+                <msup>
+                    <mn>2</mn>
+                    <mn>1</mn>
+                </msup>
+                <mi>&#x3C0;</mi>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo>,</mo>
+                <mo>.</mo>
+                <mo>.</mo>
+                <mo>.</mo>
+                <mo>,</mo>
+                <mi>s</mi>
+                <mi>i</mi>
+                <mi>n</mi>
+                <mo stretchy="false">(</mo>
+                <msup>
+                    <mn>2</mn>
+                    <mrow data-mjx-texclass="ORD">
+                        <mi>L</mi>
+                        <mo>&#x2212;</mo>
+                        <mn>1</mn>
+                    </mrow>
+                </msup>
+                <mi>&#x3C0;</mi>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo>,</mo>
+                <mi>c</mi>
+                <mi>o</mi>
+                <mi>s</mi>
+                <mo stretchy="false">(</mo>
+                <msup>
+                    <mn>2</mn>
+                    <mrow data-mjx-texclass="ORD">
+                        <mi>L</mi>
+                        <mo>&#x2212;</mo>
+                        <mn>1</mn>
+                    </mrow>
+                </msup>
+                <mi>&#x3C0;</mi>
+                <mi>x</mi>
+                <mo stretchy="false">)</mo>
+                <mo fence="false" stretchy="false">}</mo>
+            </math>
+
+            <h3>Part 0: Setup</h3>
+            <p>
+                We are going to use the diffusion model DeepFloyd, to generate our images using text input.
+                It is a two stage model by Stability AI. In the first stage it first generates a 64x64 image from the
+                text input and then in the second stage it generates a 256x256 image by upsampling the 64x64 image.
+            </p>
+            <p>
+                Lets see what our diffucion model generates, if we feed it some prompts. We use the following prompts:
+                "an oil painting of a snowy mountain village"<br>
+                "a man wearing a hat"<br>
+                "a rocket ship"<br>
+            </p>
+            <p>
+                The results are shown below, I used different amounts of inference steps to generate the images:
+            </p>
+            <p>
+                We now implement a dataloader that randomly selects N samples at every iteration during training.
+                Giving us the coodinates of the pixel as Nx2 and also the rgb values of the pixel as Nx3.
+                We use some normalization for better results: (x = x / image_width, y = y / image_height) and the colors
+                (rgbs = rgbs / 255.0)
+            </p>
+            <p>
+                We further use the Adam optimizer with a learning rate of 1e-4 and train the model for 1000 iterations,
+                and get the following results:
+            </p>
+            <p>
+                The below images show the process of optimizing the network to fit on this image:
+                Here I have choosen the following hyperparameters:
+                Learning rate: 1e-2 <br>
+                Hidden Size: 256
+                L: 10
+                Batch Size: 10,000
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                10 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_100.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                100 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_200.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                200 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_400.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                400 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_1000.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                1000 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_g.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Plot showing the training PSNR across iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                We run the same on a different image, with the same hyperparameters and get the following results:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                10 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_100.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                100 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_200.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                200 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_400.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                400 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_1000.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                1000 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_g.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Plot showing the training PSNR four our second image across iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Now we try the hyperparameter tuning. We start with tuning our L and set it to 40.<br>
+                We get the following results, which show us that setting L to a very high value does not improve the
+                results:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our image result after 1000 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our training curve for L=40
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Now we try the hyperparameter tuning with a different parameter. We try to set our hidden dimension to
+                32 instead of 256.<br>
+                We get the following results, which show us that setting our hidden dimension to a lower value does
+                decrease our result.
+                Our network does not have a big enough capacity to learn the image anymore:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our image result after 1000 Iterations (hidden dimension = 32)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our training curve for hidden dimension = 32
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <h3>Part 2: Fit a Neural Radiance Field from Multi-view Images</h3>
+            <p>
+                Now we are familiar with the basics of NeRF, trying to fit it to learn a 2D image, we can not transition
+                to 3D.
+                For this we are going to use the Lego Bulldozer dataset from the original <a
+                    href="https://www.matthewtancik.com/nerf">NeRF Paper</a>.
+                We use a resulution of 200x200.
+            </p>
+            <p>
+                For this we first need to implement the conversion of 3D camera coordinates into 3D world coordinates,
+                we imlement the following function.
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true" columnalign="right" columnspacing="" rowspacing="3pt">
+                    <mtr>
+                        <mtd>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">[</mo>
+                                <mtable columnalign="center" columnspacing="1em" rowspacing="4pt">
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>x</mi>
+                                                <mi>c</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>y</mi>
+                                                <mi>c</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>z</mi>
+                                                <mi>c</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <mn>1</mn>
+                                        </mtd>
+                                    </mtr>
+                                </mtable>
+                                <mo data-mjx-texclass="CLOSE">]</mo>
+                            </mrow>
+                            <mo>=</mo>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">[</mo>
+                                <mtable columnalign="center" columnspacing="1em" rowspacing="4pt">
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mrow data-mjx-texclass="ORD">
+                                                    <mi mathvariant="bold">R</mi>
+                                                </mrow>
+                                                <mrow data-mjx-texclass="ORD">
+                                                    <mn>3</mn>
+                                                    <mo>&#xD7;</mo>
+                                                    <mn>3</mn>
+                                                </mrow>
+                                            </msub>
+                                        </mtd>
+                                        <mtd>
+                                            <mrow data-mjx-texclass="ORD">
+                                                <mi mathvariant="bold">t</mi>
+                                            </mrow>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mrow data-mjx-texclass="ORD">
+                                                    <mn mathvariant="bold">0</mn>
+                                                </mrow>
+                                                <mrow data-mjx-texclass="ORD">
+                                                    <mn>1</mn>
+                                                    <mo>&#xD7;</mo>
+                                                    <mn>3</mn>
+                                                </mrow>
+                                            </msub>
+                                        </mtd>
+                                        <mtd>
+                                            <mn>1</mn>
+                                        </mtd>
+                                    </mtr>
+                                </mtable>
+                                <mo data-mjx-texclass="CLOSE">]</mo>
+                            </mrow>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">[</mo>
+                                <mtable columnalign="center" columnspacing="1em" rowspacing="4pt">
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>x</mi>
+                                                <mi>w</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>y</mi>
+                                                <mi>w</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>z</mi>
+                                                <mi>w</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <mn>1</mn>
+                                        </mtd>
+                                    </mtr>
+                                </mtable>
+                                <mo data-mjx-texclass="CLOSE">]</mo>
+                            </mrow>
+                        </mtd>
+                    </mtr>
+                </mtable>
+            </math>
+            <p>
+                Then we implement the function to convert 2D image coordinates into 3D camera coordinates.
+                Here we just need to implement the following function:
+            </p>
+
+
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true" columnalign="right" columnspacing="" rowspacing="3pt">
+                    <mtr>
+                        <mtd>
+                            <mi>s</mi>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">[</mo>
+                                <mtable columnalign="center" columnspacing="1em" rowspacing="4pt">
+                                    <mtr>
+                                        <mtd>
+                                            <mi>u</mi>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <mi>v</mi>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <mn>1</mn>
+                                        </mtd>
+                                    </mtr>
+                                </mtable>
+                                <mo data-mjx-texclass="CLOSE">]</mo>
+                            </mrow>
+                            <mo>=</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">K</mi>
+                            </mrow>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">[</mo>
+                                <mtable columnalign="center" columnspacing="1em" rowspacing="4pt">
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>x</mi>
+                                                <mi>c</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>y</mi>
+                                                <mi>c</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                    <mtr>
+                                        <mtd>
+                                            <msub>
+                                                <mi>z</mi>
+                                                <mi>c</mi>
+                                            </msub>
+                                        </mtd>
+                                    </mtr>
+                                </mtable>
+                                <mo data-mjx-texclass="CLOSE">]</mo>
+                            </mrow>
+                        </mtd>
+                    </mtr>
+                </mtable>
+            </math>
+
+
+            <p>
+                After we can implement the function to turn pixel coordinates into rays. For this function we need the
+                K, camera to world matrix
+                and the pixel coordinates. We find the camera origin by just transforming the origin of the camera with
+                our previous cam to world function.
+            </p>
+
+            <p>
+                For finding the ray direction we use the following function:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true" columnalign="right" columnspacing="" rowspacing="3pt">
+                    <mtr>
+                        <mtd>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="bold">r</mi>
+                                </mrow>
+                                <mi>d</mi>
+                            </msub>
+                            <mo>=</mo>
+                            <mfrac>
+                                <mrow>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <msub>
+                                            <mi mathvariant="bold">X</mi>
+                                            <mi mathvariant="bold">w</mi>
+                                        </msub>
+                                    </mrow>
+                                    <mo>&#x2212;</mo>
+                                    <msub>
+                                        <mrow data-mjx-texclass="ORD">
+                                            <mi mathvariant="bold">r</mi>
+                                        </mrow>
+                                        <mi>o</mi>
+                                    </msub>
+                                </mrow>
+                                <mrow>
+                                    <mo stretchy="false">|</mo>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <mo stretchy="false">|</mo>
+                                    </mrow>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <msub>
+                                            <mi mathvariant="bold">X</mi>
+                                            <mi mathvariant="bold">w</mi>
+                                        </msub>
+                                    </mrow>
+                                    <mo>&#x2212;</mo>
+                                    <msub>
+                                        <mrow data-mjx-texclass="ORD">
+                                            <mi mathvariant="bold">r</mi>
+                                        </mrow>
+                                        <mi>o</mi>
+                                    </msub>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <mo stretchy="false">|</mo>
+                                    </mrow>
+                                    <msub>
+                                        <mo stretchy="false">|</mo>
+                                        <mn>2</mn>
+                                    </msub>
+                                </mrow>
+                            </mfrac>
+                        </mtd>
+                    </mtr>
+                </mtable>
+            </math>
+
+            <p>
+                Now we adjust our dataloader to sample rays from the images. We sample random rays by first sampling a
+                batch size of
+                200x200 u and v coordinates and then stacking them on top of each other. We then apply our previous
+                mentioned
+                functions to get the rays, that means the ray origin and the ray direction, then we also add the
+                lable/rgb values.
+                We sample randomly by just selecting random entries from this stack.
+                We also shift the coordinates by 0.5 to make sure that we are sampling from the middle of the pixel and
+                not the corner.
+                Once we have the ray origin and ray direction, we sample multiple points on this ray between 2 and 6.
+            </p>
+            <p>
+                We can now use viser to visualize our cameras, rays and points on our rays, to make sure we have the
+                right setup:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_3_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the visualization of our setup. We are displaying all cameras and then choosing
+                                random rays to
+                                display. We then display the points on the rays that we are going to sample.
+                                These are the rays and samples we draw at every iteration training step.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_3_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This is the visualization of only one camera in our setup. We are choosing random rays
+                                from this one
+                                camera so see whether the rays are all inside the frustum.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Now we can continue on to implement the architecture of our NeRF model. We use the following
+                architecture:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_4_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                This new architecutre is very similar to our old network we used in 2D but we are
+                                extending it by
+                                changing it to accept 3D input, which is first a 3D point in our space and then second a
+                                3D viewing
+                                direction.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                We make it to ourput a 3D RGB color and also a density value of the pixel.
+            </p>
+            <p>
+                We use Sigmoid to set the output color within range (0, 1), and use ReLU to set the output density to be
+                non negative. We also adjust our PE function to accept 3D input concatonate it with our RGB output
+                branch.
+            </p>
+
+            <p>
+                One we have set up our network we can now create our volume redering function. While the actual volume
+                rendering function is as follows:
+            </p>
+
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true" columnalign="right" columnspacing="" rowspacing="3pt">
+                    <mtr>
+                        <mtd>
+                            <mi>C</mi>
+                            <mo stretchy="false">(</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">r</mi>
+                            </mrow>
+                            <mo stretchy="false">)</mo>
+                            <mo>=</mo>
+                            <msubsup>
+                                <mo data-mjx-texclass="OP">&#x222B;</mo>
+                                <mrow data-mjx-texclass="ORD">
+                                    <msub>
+                                        <mi>t</mi>
+                                        <mi>n</mi>
+                                    </msub>
+                                </mrow>
+                                <mrow data-mjx-texclass="ORD">
+                                    <msub>
+                                        <mi>t</mi>
+                                        <mi>f</mi>
+                                    </msub>
+                                </mrow>
+                            </msubsup>
+                            <mi>T</mi>
+                            <mo stretchy="false">(</mo>
+                            <mi>t</mi>
+                            <mo stretchy="false">)</mo>
+                            <mi>&#x3C3;</mi>
+                            <mo stretchy="false">(</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">r</mi>
+                            </mrow>
+                            <mo stretchy="false">(</mo>
+                            <mi>t</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo stretchy="false">)</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">c</mi>
+                            </mrow>
+                            <mo stretchy="false">(</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">r</mi>
+                            </mrow>
+                            <mo stretchy="false">(</mo>
+                            <mi>t</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>,</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">d</mi>
+                            </mrow>
+                            <mo stretchy="false">)</mo>
+                            <mi>d</mi>
+                            <mi>t</mi>
+                            <mo>,</mo>
+                            <mtext>&#xA0;where&#xA0;</mtext>
+                            <mi>T</mi>
+                            <mo stretchy="false">(</mo>
+                            <mi>t</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>=</mo>
+                            <mi>exp</mi>
+                            <mo data-mjx-texclass="NONE">&#x2061;</mo>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">(</mo>
+                                <mo>&#x2212;</mo>
+                                <msubsup>
+                                    <mo data-mjx-texclass="OP">&#x222B;</mo>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <msub>
+                                            <mi>t</mi>
+                                            <mi>n</mi>
+                                        </msub>
+                                    </mrow>
+                                    <mi>t</mi>
+                                </msubsup>
+                                <mi>&#x3C3;</mi>
+                                <mo stretchy="false">(</mo>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="bold">r</mi>
+                                </mrow>
+                                <mo stretchy="false">(</mo>
+                                <mi>s</mi>
+                                <mo stretchy="false">)</mo>
+                                <mo stretchy="false">)</mo>
+                                <mi>d</mi>
+                                <mi>s</mi>
+                                <mo data-mjx-texclass="CLOSE">)</mo>
+                            </mrow>
+                        </mtd>
+                    </mtr>
+                </mtable>
+            </math>
+
+
+            <p>
+                We have to use the discrete version of this function, as we can not integrate over the continuous space:
+            </p>
+
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true" columnalign="right" columnspacing="" rowspacing="3pt">
+                    <mtr>
+                        <mtd>
+                            <mrow data-mjx-texclass="ORD">
+                                <mover>
+                                    <mi>C</mi>
+                                    <mo stretchy="false">^</mo>
+                                </mover>
+                            </mrow>
+                            <mo stretchy="false">(</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">r</mi>
+                            </mrow>
+                            <mo stretchy="false">)</mo>
+                            <mo>=</mo>
+                            <munderover>
+                                <mo data-mjx-texclass="OP">&#x2211;</mo>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>i</mi>
+                                    <mo>=</mo>
+                                    <mn>1</mn>
+                                </mrow>
+                                <mi>N</mi>
+                            </munderover>
+                            <msub>
+                                <mi>T</mi>
+                                <mi>i</mi>
+                            </msub>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">(</mo>
+                                <mn>1</mn>
+                                <mo>&#x2212;</mo>
+                                <mi>exp</mi>
+                                <mo data-mjx-texclass="NONE">&#x2061;</mo>
+                                <mrow data-mjx-texclass="INNER">
+                                    <mo data-mjx-texclass="OPEN">(</mo>
+                                    <mo>&#x2212;</mo>
+                                    <msub>
+                                        <mi>&#x3C3;</mi>
+                                        <mi>i</mi>
+                                    </msub>
+                                    <msub>
+                                        <mi>&#x3B4;</mi>
+                                        <mi>i</mi>
+                                    </msub>
+                                    <mo data-mjx-texclass="CLOSE">)</mo>
+                                </mrow>
+                                <mo data-mjx-texclass="CLOSE">)</mo>
+                            </mrow>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="bold">c</mi>
+                                </mrow>
+                                <mi>i</mi>
+                            </msub>
+                            <mo>,</mo>
+                            <mtext>&#xA0;where&#xA0;</mtext>
+                            <msub>
+                                <mi>T</mi>
+                                <mi>i</mi>
+                            </msub>
+                            <mo>=</mo>
+                            <mi>exp</mi>
+                            <mo data-mjx-texclass="NONE">&#x2061;</mo>
+                            <mrow data-mjx-texclass="INNER">
+                                <mo data-mjx-texclass="OPEN">(</mo>
+                                <mo>&#x2212;</mo>
+                                <munderover>
+                                    <mo data-mjx-texclass="OP">&#x2211;</mo>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <mi>j</mi>
+                                        <mo>=</mo>
+                                        <mn>1</mn>
+                                    </mrow>
+                                    <mrow data-mjx-texclass="ORD">
+                                        <mi>i</mi>
+                                        <mo>&#x2212;</mo>
+                                        <mn>1</mn>
+                                    </mrow>
+                                </munderover>
+                                <msub>
+                                    <mi>&#x3C3;</mi>
+                                    <mi>j</mi>
+                                </msub>
+                                <msub>
+                                    <mi>&#x3B4;</mi>
+                                    <mi>j</mi>
+                                </msub>
+                                <mo data-mjx-texclass="CLOSE">)</mo>
+                            </mrow>
+                        </mtd>
+                    </mtr>
+                </mtable>
+            </math>
+
+            <p>
+                We can understand this through an analogy, where the ray travels through the volume and depending on the density and color, picks up on Color
+                and ends up with a saturated final color.<br>
+                C is the color obtained from the network, Ti is the probability of the ray not termonating before the sampling location i.
+            </p>
+            <p>
+                We then implement the training loop, which uses the previously mentioned dataset function to get the ray origin and ray direction from our
+                intrinsic matrix, pixels and camera to world matrix. We then use the network to get the color and density of the pixel by feeding the 
+                points and ray direction into the model. 
+            </p>
+            <p>
+                We train 1000 iterations with a batch size of 10.000 pixels and a learning rate of 1e-3.
+                In the following we can see the training loop and the results of the training loop, these specifically
+                do not show a training sample but an unseen validation sample:
+            </p>
+
+
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_5_50.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                10 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_5_100.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                After 100 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_5_150.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                After 150 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_5_300.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                After 300 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_5_800.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                After 800 Iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_2_g.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Plot showing the validation PSNR of our 3D nerf model across iterations
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <p>
+                This is our final result. I have used the camera intrinsics from our test dataset to generate images and create
+                a spinning 3D gif view of our Lego Bulldozer.
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_5_2.gif" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gif showing the Lego Bulldozer from different angles
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                For the final part we are going to implement the bells and whisles of displaying the depth. It is very similar to the mentioned volrendering part, only
+                that we only output our sigma and use the sigma to display our depth. Since it is only a scalar, we render normalize it and render it in grey.
+                Instead of compositing the point colors to the pixel color in the volume rendering, we in addition  composite the point depths per point to the pixel depth.
+            </p>
+            <p>
+                The following shows our gif of the depth of the Lego Bulldozer:
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/2_6_2.gif" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gif showing the depth of the Lego Bulldozer from different angles
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+            <p>
+                A diffusion model tries to reverse this process. It starts with a noisy image at time step T and tries
+                to remove the noise until it ends up with an image. In a way, the models are trained to remove the
+                noise.
+            </p>
+            <h4>1.1 Implementing the Forward Process</h4>
+            <p>
+                Now we want to implement the sampling loop and we first have to start with the forward process, where we
+                take a clean image and add noise to it. This function describes how we can add noise to the image:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd id="mjx-eqn:1">
+                            <mtext>(1)</mtext>
+                        </mtd>
+                        <mtd>
+                            <mi>q</mi>
+                            <mo stretchy="false">(</mo>
+                            <msub>
+                                <mi>x</mi>
+                                <mi>t</mi>
+                            </msub>
+                            <mrow data-mjx-texclass="ORD">
+                                <mo stretchy="false">|</mo>
+                            </mrow>
+                            <msub>
+                                <mi>x</mi>
+                                <mn>0</mn>
+                            </msub>
+                            <mo stretchy="false">)</mo>
+                            <mo>=</mo>
+                            <mi>N</mi>
+                            <mo stretchy="false">(</mo>
+                            <msub>
+                                <mi>x</mi>
+                                <mi>t</mi>
+                            </msub>
+                            <mo>;</mo>
+                            <msqrt>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mover>
+                                        <mi>&#x3B1;</mi>
+                                        <mo stretchy="false">&#xAF;</mo>
+                                    </mover>
+                                </mrow>
+                            </msqrt>
+                            <msub>
+                                <mi>x</mi>
+                                <mn>0</mn>
+                            </msub>
+                            <mo>,</mo>
+                            <mo stretchy="false">(</mo>
+                            <mn>1</mn>
+                            <mo>&#x2212;</mo>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mover>
+                                        <mi>&#x3B1;</mi>
+                                        <mo stretchy="false">&#xAF;</mo>
+                                    </mover>
+                                </mrow>
+                                <mi>t</mi>
+                            </msub>
+                            <mo stretchy="false">)</mo>
+                            <mrow data-mjx-texclass="ORD">
+                                <mi mathvariant="bold">I</mi>
+                            </mrow>
+                            <mo stretchy="false">)</mo>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                Using the Berkeley Campanile as our example image, and the previously mentioned function with 1000 time
+                steps, we get the following results:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Berkeley Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_250.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=250
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_500.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=500
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_750.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=750
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.2 Classical Denoising</h4>
+            <p>
+                Now we want to try to denoise the images we generated in the previous step. We can use the classical
+                method of
+                Gaussian blur filtering to remove the noise. It improves the noisy images somewhat, but the results are
+                not satisfying yet.
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_250.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=250
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_500.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=500
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_750.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=750
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Gaussian_Denoise_Campanile_t_250.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gaussian Blur Denoising at t=250
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Gaussian_Denoise_Campanile_t_500.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gaussian Blur Denoising at t=500
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Gaussian_Denoise_Campanile_t_750.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gaussian Blur Denoising at t=750
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.3 One-Step Denoising</h4>
+            <p>
+                The model we are using has a denoiser, which has been trained on a very large image dataset. We can use
+                this pretrained
+                denoiser to denoise the noisy images we have generated in the previous step, by letting it predict the
+                gaussian noise in
+                each step and removing said noise. The denoiser is a Unet, which also needs, as input, the timestep t as
+                additional input.
+            </p>
+            <p>
+                The original image, the noisy image and the estimate of the original image
+                are shown below:
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Berkeley Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_250.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=250
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_500.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=500
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/Noisy_Campanile_t_750.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Noisy Campanile at t=750
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_noise_unet_t_250.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Assumed noise at t=250
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_noise_unet_t_500.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Assumed noise at t=500
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_noise_unet_t_750.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Assumed noise at t=750
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_denoise_unet_t_250.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image at t=250
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_denoise_unet_t_500.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image t=500
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_3_denoise_unet_t_750.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image at t=750
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.4 Iterative Denoising</h4>
+            <p>
+                Previously we have tried to denoise the image in one step, but we can see that one step denoising
+                preforms not as good
+                if we have more noise, which is why we want to try to denoise the image iteratively, since diffusion
+                models are meant to
+                denoise iteratively. Even though in theory we start denoising the image from timestep 1000, and denoise
+                the image one step
+                at a time until we reach timestep 0 and end up with the clear image, this would cost a lot of time and
+                compute, so
+                we are going to denoise
+                the image using larger step sizes of 30, which will still yield similarly good results.
+            </p>
+            <p>
+                We use the following formular to receive the less noisy image at the next timestep, according to the
+                following
+                <a href="https://arxiv.org/pdf/2006.11239">DDPM Paper</a>:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd>
+                            <msub>
+                                <mi>x</mi>
+                                <mrow data-mjx-texclass="ORD">
+                                    <msup>
+                                        <mi>t</mi>
+                                        <mo data-mjx-alternate="1">&#x2032;</mo>
+                                    </msup>
+                                </mrow>
+                            </msub>
+                            <mo>=</mo>
+                            <mfrac>
+                                <mrow>
+                                    <msqrt>
+                                        <msub>
+                                            <mrow data-mjx-texclass="ORD">
+                                                <mover>
+                                                    <mi>&#x3B1;</mi>
+                                                    <mo stretchy="false">&#xAF;</mo>
+                                                </mover>
+                                            </mrow>
+                                            <mrow data-mjx-texclass="ORD">
+                                                <msup>
+                                                    <mi>t</mi>
+                                                    <mo data-mjx-alternate="1">&#x2032;</mo>
+                                                </msup>
+                                            </mrow>
+                                        </msub>
+                                    </msqrt>
+                                    <msub>
+                                        <mi>&#x3B2;</mi>
+                                        <mi>t</mi>
+                                    </msub>
+                                </mrow>
+                                <mrow>
+                                    <mn>1</mn>
+                                    <mo>&#x2212;</mo>
+                                    <msub>
+                                        <mrow data-mjx-texclass="ORD">
+                                            <mover>
+                                                <mi>&#x3B1;</mi>
+                                                <mo stretchy="false">&#xAF;</mo>
+                                            </mover>
+                                        </mrow>
+                                        <mi>t</mi>
+                                    </msub>
+                                </mrow>
+                            </mfrac>
+                            <msub>
+                                <mi>x</mi>
+                                <mn>0</mn>
+                            </msub>
+                            <mo>+</mo>
+                            <mfrac>
+                                <mrow>
+                                    <msqrt>
+                                        <msub>
+                                            <mi>&#x3B1;</mi>
+                                            <mi>t</mi>
+                                        </msub>
+                                    </msqrt>
+                                    <mo stretchy="false">(</mo>
+                                    <mn>1</mn>
+                                    <mo>&#x2212;</mo>
+                                    <msub>
+                                        <mrow data-mjx-texclass="ORD">
+                                            <mover>
+                                                <mi>&#x3B1;</mi>
+                                                <mo stretchy="false">&#xAF;</mo>
+                                            </mover>
+                                        </mrow>
+                                        <mrow data-mjx-texclass="ORD">
+                                            <msup>
+                                                <mi>t</mi>
+                                                <mo data-mjx-alternate="1">&#x2032;</mo>
+                                            </msup>
+                                        </mrow>
+                                    </msub>
+                                    <mo stretchy="false">)</mo>
+                                </mrow>
+                                <mrow>
+                                    <mn>1</mn>
+                                    <mo>&#x2212;</mo>
+                                    <msub>
+                                        <mrow data-mjx-texclass="ORD">
+                                            <mover>
+                                                <mi>&#x3B1;</mi>
+                                                <mo stretchy="false">&#xAF;</mo>
+                                            </mover>
+                                        </mrow>
+                                        <mi>t</mi>
+                                    </msub>
+                                </mrow>
+                            </mfrac>
+                            <msub>
+                                <mi>x</mi>
+                                <mi>t</mi>
+                            </msub>
+                            <mo>+</mo>
+                            <msub>
+                                <mi>v</mi>
+                                <mi>&#x3C3;</mi>
+                            </msub>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                Here I am showing the noisy image result of every 5th loop of the iterative denoising function, each
+                loop has a step size of 30:
+            </p>
+            <div class="row row-cols-1 row-cols-md-5 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Noisy_Campanile_t_690.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image at t=690
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Noisy_Campanile_t_540.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image t=540
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Noisy_Campanile_t_390.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image at t=390
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Noisy_Campanile_t_240.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image at t=240
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Noisy_Campanile_t_90.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Estimate of the original image at t=90
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Berkeley Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Iterative_Denoised_Campanile_t_690.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Iteratively Denoised Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_One_Step_Denoised_Campanile.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                One Step Denoised Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_Gaussian_Blurred_Campanile.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Gaussian Blurred Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                We can see that the iterative denoising method works better that the one step denoising method, but it
+                still does not result in the original image. The result looks like a tower, but it is not exactly the
+                Berkeley Campanile.
+            </p>
+
+            <h3>What I have learned</h3>
+            <p>
+                I often use the panorama feature on my phone to take panorama shots. I did not think that creating
+                panorama shots was this easy.
+                I learned how to choose features, then create feature descriptors, match features and then use RANSAC to
+                find the best homography matrix by ignoring outliers.
+            </p>
+            <p>
+                It was very interesting to see how well the homography matrix could rectify parts of images that were
+                taken from different angles.
+                Another very interesting observation was how well matching the feature descriptors worked, using the
+                ration of the distance to the first and second nearest neighbour,
+                which RANSAC further improved on to remove any outliers.
+            </p>
+            <h4>1.5 Diffusion Model Sampling</h4>
+            <p>
+                Now we want to sample from our diffusion model by choosing the promt "a high quality image" and using
+                pure noise
+                generate an image. Here are 5 sample images generated using the mentioned prompt:
+            </p>
+            <div class="row row-cols-1 row-cols-md-5 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_sample_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_sample_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 2 (Who is this?)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_sample_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_sample_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 4
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_5_sample_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.6 Classifier-Free Guidance (CFG)</h4>
+            <p>
+                The images above are reasonable but not good and a little non-sensical, which is why we want to use the
+                Classifier-Free
+                Guidance (CFG) method to guide the diffusion model to generate better images.
+            </p>
+            <p>
+                CFG works by using a conditional guidance, basically a denoising that closely alligns with the given
+                prompt and an unconditional guidance, a denoising that does not have a prompt. We use the following
+                formular for it:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd>
+                            <mi>&#x3F5;</mi>
+                            <mo>=</mo>
+                            <msub>
+                                <mi>&#x3F5;</mi>
+                                <mi>u</mi>
+                            </msub>
+                            <mo>+</mo>
+                            <mi>&#x3B3;</mi>
+                            <mo stretchy="false">(</mo>
+                            <msub>
+                                <mi>&#x3F5;</mi>
+                                <mi>c</mi>
+                            </msub>
+                            <mo>&#x2212;</mo>
+                            <msub>
+                                <mi>&#x3F5;</mi>
+                                <mi>u</mi>
+                            </msub>
+                            <mo stretchy="false">)</mo>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                We implement the Classifier Free Guidance according to the following paper <a
+                    href="https://arxiv.org/pdf/2102.12098.pdf">here</a> and use a CFG scale of 7 to generate the new
+                images.
+                We can see that this does improves the image quality:
+            </p>
+            <div class="row row-cols-1 row-cols-md-5 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_6_sample_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 1 with CFG
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_6_sample_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 2 with CFG
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_6_sample_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 3 with CFG
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_6_sample_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 4 with CFG
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_6_sample_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample 5 with CFG
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.7 Image-to-image Translation</h4>
+            <p>
+                Image to image translation is the process of taking one image and transforming into a different but
+                related image.
+                Here we can do that through noise, we add noise of varying amounts to an image and then use our
+                diffusion model
+                to predict the noise and remove it. Depending on the noise we add, the image will look just slightly or
+                vastly different,
+                since the model will be hallucinating the noise away.
+            </p>
+            <p>
+                Here we will follow the <a href="https://sde-image-editing.github.io/">SDEdit</a> algorithm to force an
+                image, that has
+                been appended with some noise, back to the original image manifold, without using conditioning.
+            </p>
+            <p>
+                Here we show the SDEdit result of 3 images at noise level [1, 3, 5, 7, 10, 20] with text prompt "a high
+                quality photo".
+                We first start with the Berkeley Campanile image, then with an nonsensical image of our Oranapple and
+                finally with a
+                very commonly seen image, our earth:
+            </p>
+            <p>Berkeley Campanile:</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Berkeley Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img1_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img1_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img1_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img1_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img1_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img1_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>Oranapple (Since this is a very unrealistic immage, the model has difficulties creating this):</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Oranapple
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img2_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>Earth (Since this is a very common immage, the model recreates this image pretty early on):</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Earth
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_img3_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.7.1 Editing Hand-Drawn and Web Images</h4>
+            <p>
+                We can also use the SDEdit algorithm to edit hand-drawn and web images. Here we first show the result of
+                the
+                SDEdit algorithm on a unrealistic web image:
+            </p>
+            <p>Unrealistic image of a cat, and a graphic of a rainbow and pixel cat reflecting in it's glasses:</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_internet_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Cat with glasses and rainbow pixel cat reflection
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_img1_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_img1_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_img1_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_img1_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_img1_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_img1_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>My drawing of a person:</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: My drawing of a person:
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_6.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_2_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>My drawing of a house:</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: My drawing of a house
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_6.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_1_3_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                SDEdit with i_start=20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.7.2 Inpainting</h4>
+            <p>
+                Inpainting is the process of using a mask to mark areas of an image that should be regenerated using our
+                diffusion model.
+                We adjust our denoising function to force our denoised image after each step to have the same pixels
+                like our
+                original image at places where mask m is 0. The rest we leave as is. We are basically applying the
+                following formula:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd>
+                            <msub>
+                                <mi>x</mi>
+                                <mi>t</mi>
+                            </msub>
+                            <mo stretchy="false">&#x2190;</mo>
+                            <mtext mathvariant="bold">m</mtext>
+                            <msub>
+                                <mi>x</mi>
+                                <mi>t</mi>
+                            </msub>
+                            <mo>+</mo>
+                            <mo stretchy="false">(</mo>
+                            <mn>1</mn>
+                            <mo>&#x2212;</mo>
+                            <mtext mathvariant="bold">m</mtext>
+                            <mo stretchy="false">)</mo>
+                            <mtext>forward</mtext>
+                            <mo stretchy="false">(</mo>
+                            <msub>
+                                <mi>x</mi>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>o</mi>
+                                    <mi>r</mi>
+                                    <mi>i</mi>
+                                    <mi>g</mi>
+                                </mrow>
+                            </msub>
+                            <mo>,</mo>
+                            <mi>t</mi>
+                            <mo stretchy="false">)</mo>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                We end up with the following result:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_original_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Campanile
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_mask_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mask
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_replace_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Hole to Fill
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_inpainting_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Campanile Inpainted
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                For the cool cat, we end up with the following result:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_original_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Cool Cat
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_mask_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mask
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_replace_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Hole to Fill
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_inpainting_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Cool Cat Inpainted
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Castle on a snowy mountain:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_original_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Original image: Castle on mountain
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_mask_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Mask
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_replace_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Hole to Fill
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_2_inpainting_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Castle on mountain Inpainted
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.7.3 Text-Conditional Image-to-image Translation</h4>
+            <p>
+                For the text conditional image-to-image translation we basically use the same method as for the
+                standard image to image tranlation, but this time, choose a different prompts to condition the diffusion
+                model.
+            </p>
+            <p>
+                For this text conditional image to image translation, we used the prompt "a rocket ship" and our
+                Campanile image:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img1_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Rocket Ship at noise level 1
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img1_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Rocket Ship at noise level 3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img1_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Rocket Ship at noise level 5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img1_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Rocket Ship at noise level 7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img1_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Rocket Ship at noise level 10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img1_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Rocket Ship at noise level 20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_4_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Campanile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                For this text conditional image to image translation, we used the prompt "a man wearing a hat" and our
+                Oranapple image:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a man wearing a hat at noise level 1
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a man wearing a hat at noise level 3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a man wearing a hat at noise level 5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a man wearing a hat at noise level 7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a man wearing a hat at noise level 10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a man wearing a hat at noise level 20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img2_istart_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Oranapple
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                For this text conditional image to image translation, we used the prompt "a pencil" and our earth image:
+            </p>
+            <div class="row row-cols-1 row-cols-md-4 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a pencil at noise level 1
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a pencil a hat at noise level 3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a pencil at noise level 5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_7.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a pencil at noise level 7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_10.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a pencil at noise level 10
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_20.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                a pencil at noise level 20
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_7_3_img3_istart_original.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our Earth
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>1.8 Visual Anagrams</h4>
+            <p>
+                I this section we are going to create visual anagrams, which are one kind of optical illusions.
+                These images appear like something else when flipped around.
+            </p>
+            <p>
+                To archive this, we are denoising the image using 2 different prompts. We use the prompt
+                "an oil painting of an old man" to obtain a noise estimate 1 and then use a different prompt
+                "an oil painting of people around a campfire" to obtain a noise estimate of the flipped input image.
+            </p>
+            <p>
+                We then combine both noise estimates and use this combined noise estimate to perform the diffusion
+                steps.
+                The procedure can be summarized with the following functions:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" class="my-3">
+                <msub>
+                    <mi>&#x03F5;<!-- ϵ --></mi>
+                    <mrow class="MJX-TeXAtom-ORD">
+                        <mn>1</mn>
+                    </mrow>
+                </msub>
+                <mo>=</mo>
+                <mrow class="MJX-TeXAtom-ORD">
+                    <mtext mathvariant="bold">UNet</mtext>
+                </mrow>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>x</mi>
+                    <mrow class="MJX-TeXAtom-ORD">
+                        <mi>t</mi>
+                    </mrow>
+                </msub>
+                <mo>,</mo>
+                <mi>t</mi>
+                <mo>,</mo>
+                <msub>
+                    <mi>p</mi>
+                    <mrow class="MJX-TeXAtom-ORD">
+                        <mn>1</mn>
+                    </mrow>
+                </msub>
+                <mo stretchy="false">)</mo>
+            </math>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" class="my-3">
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>2</mn>
+                </msub>
+                <mo>=</mo>
+                <mtext>flip</mtext>
+                <mo stretchy="false">(</mo>
+                <mtext>UNet</mtext>
+                <mo stretchy="false">(</mo>
+                <mtext>flip</mtext>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>x</mi>
+                    <mi>t</mi>
+                </msub>
+                <mo stretchy="false">)</mo>
+                <mo>,</mo>
+                <mi>t</mi>
+                <mo>,</mo>
+                <msub>
+                    <mi>p</mi>
+                    <mn>2</mn>
+                </msub>
+                <mo stretchy="false">)</mo>
+                <mo stretchy="false">)</mo>
+            </math>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" class="my-3">
+                <mi>&#x3F5;</mi>
+                <mo>=</mo>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>1</mn>
+                </msub>
+                <mo>+</mo>
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>2</mn>
+                </msub>
+                <mo stretchy="false">)</mo>
+                <mrow data-mjx-texclass="ORD">
+                    <mo>/</mo>
+                </mrow>
+                <mn>2</mn>
+            </math>
+            <p>
+                We show 4 resulting visual anagrams generated using the descriped procedure:
+            </p>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_1_no0.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                An Oil Painting of People around a Campfire
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_1_no0_flip.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                An Oil Painting of an Old Man
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_1_no1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                An Oil Painting of People around a Campfire
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_1_no1_flip.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                An Oil Painting of an Old Man
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_2_no1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                A photo of the Amalfi cost
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_2_no1_flip.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                A photo of a dog
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_2_no3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                A photo of the Amalfi cost
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_8_2_no3_flip.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                A photo of a dog
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>1.9 Hybrid Images</h4>
+            <p>
+                In our last part we will implement something similar to <a
+                    href="https://arxiv.org/abs/2404.11615">Factorized Diffusion</a>
+                To create hybrid images, like in our project 2.
+                We use a similar process like in 1.8, where we create 2 noise estimates with 2 different text promts and
+                then combine the
+                high frequency part of one noise with the low frequency part of the other noise estimate.
+            </p>
+            <p>
+                I used a gaussian kernel of size 33 and a sigma of 2. The process can be described with the following
+                formulas:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" class="my-3">
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>1</mn>
+                </msub>
+                <mo>=</mo>
+                <mtext>UNet</mtext>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>x</mi>
+                    <mi>t</mi>
+                </msub>
+                <mo>,</mo>
+                <mi>t</mi>
+                <mo>,</mo>
+                <msub>
+                    <mi>p</mi>
+                    <mn>1</mn>
+                </msub>
+                <mo stretchy="false">)</mo>
+            </math>
+
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" class="my-3">
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>2</mn>
+                </msub>
+                <mo>=</mo>
+                <mtext>UNet</mtext>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>x</mi>
+                    <mi>t</mi>
+                </msub>
+                <mo>,</mo>
+                <mi>t</mi>
+                <mo>,</mo>
+                <msub>
+                    <mi>p</mi>
+                    <mn>2</mn>
+                </msub>
+                <mo stretchy="false">)</mo>
+            </math>
+
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" class="my-3">
+                <mi>&#x3F5;</mi>
+                <mo>=</mo>
+                <msub>
+                    <mi>f</mi>
+                    <mtext>lowpass</mtext>
+                </msub>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>1</mn>
+                </msub>
+                <mo stretchy="false">)</mo>
+                <mo>+</mo>
+                <msub>
+                    <mi>f</mi>
+                    <mtext>highpass</mtext>
+                </msub>
+                <mo stretchy="false">(</mo>
+                <msub>
+                    <mi>&#x3F5;</mi>
+                    <mn>2</mn>
+                </msub>
+                <mo stretchy="false">)</mo>
+            </math>
+            <p>
+                These are our results:<br>
+                (To see the low frequency, move far away from the screen and squint your eyes :D)
+            </p>
+            <div class="row row-cols-1 row-cols-md-3 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_9_1_no1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Close up: A lithograph of waterfalls (high frequency)<br>
+                                Far away: A lithograph of a skull (low frequency)
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_9_2_no1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Close up: A pencil (high frequency)<br>
+                                Far away: A rocket ship (low frequency)
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data/1_9_3_no1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Close up: An oil painting of people around a campfire (high frequency)<br>
+                                Far away: An oil painting of a snowy mountain village (low frequency)<br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                For the last image, since both prompts are similar and can coexist, the image became an oil painting of
+                people around a campfire in a snowy mountain village.
+            </p>
+            <h2 class="mt-5">Part B: Diffusion Models from Scratch!</h2>
+            <hr>
+            <h3>Part 1: Training a Single-Step Denoising U-Net</h3>
+            <h4>1.1 Implementing the UNet</h4>
+            <p>
+                First we want to create a single step denoiser. We train a model to take a noisy image z as an imput and
+                output the denoised image x.
+                We use the following loss function:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd id="mjx-eqn:B.1">
+                            <mtext>(B.1)</mtext>
+                        </mtd>
+                        <mtd>
+                            <mi>L</mi>
+                            <mo>=</mo>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="double-struck">E</mi>
+                                </mrow>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>z</mi>
+                                    <mo>,</mo>
+                                    <mi>x</mi>
+                                </mrow>
+                            </msub>
+                            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                            <msub>
+                                <mi>D</mi>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>&#x3B8;</mi>
+                                </mrow>
+                            </msub>
+                            <mo stretchy="false">(</mo>
+                            <mi>z</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>&#x2212;</mo>
+                            <mi>x</mi>
+                            <msup>
+                                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                                <mn>2</mn>
+                            </msup>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                We implemented the following U-Net architecture in pytorch for our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/unconditional_arch.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Unconditional Unet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                This Unconditional Unet is made up of the following simple and composed operations:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/atomic_ops_new.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Standard UNet Operations
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                The blocks perform the following operations:<br>
+                (1) Conv is a convolutional layer that doesn't change the image resolution, only the channel
+                dimension.<br>
+                (2) DownConv is a convolutional layer that downsamples the tensor by 2.<br>
+                (3) UpConv is a convolutional layer that upsamples the tensor by 2.<br>
+                (4) Flatten is an average pooling layer that flattens a 7x7 tensor into a 1x1 tensor. 7 is the resulting
+                height and width after the downsampling operations.<br>
+                (5) Unflatten is a convolutional layer that unflattens/upsamples a 1x1 tensor into a 7x7 tensor.<br>
+                (6) Concat is a channel-wise concatenation between tensors with the same 2D shape. This is simply
+                torch.cat().<br>
+                (7) ConvBlock, is similar to Conv but includes an additional Conv. Note that it has the same input and
+                output shape as (1) Conv.<br>
+                (8) DownBlock, is similar to DownConv but includes an additional ConvBlock. Note that it has the same
+                input and output shape as (2) DownConv.<br>
+                (9) UpBlock, is similar to UpConv but includes an additional ConvBlock. Note that it has the same input
+                and output shape as (3) UpConv.<br>
+            </p>
+            <h4>1.2 Using the UNet to Train a Denoiser</h4>
+            <p>
+                To use the Unet to train a denoiser, we first add noise to our MINST images in the following way:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd id="mjx-eqn:B.2">
+                            <mtext>(B.2)</mtext>
+                        </mtd>
+                        <mtd>
+                            <mi>z</mi>
+                            <mo>=</mo>
+                            <mi>x</mi>
+                            <mo>+</mo>
+                            <mi>&#x3C3;</mi>
+                            <mi>&#x3F5;</mi>
+                            <mo>,</mo>
+                            <mstyle scriptlevel="0">
+                                <mspace width="1em"></mspace>
+                            </mstyle>
+                            <mtext>where&#xA0;</mtext>
+                            <mi>&#x3F5;</mi>
+                            <mo>&#x223C;</mo>
+                            <mi>N</mi>
+                            <mo stretchy="false">(</mo>
+                            <mn>0</mn>
+                            <mo>,</mo>
+                            <mi>I</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>.</mo>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                Here are the resulting noisy images, that were generated using different sigmas:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Varying levels of noise on MNIST digits
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Now we can finally start training our model using the previously noised images.
+                We use a sigma noise level of 0.5, a batch size of 256 and trained for 5 epochs.
+                We also use a hidden dimension of D=128 and a learning rate of 1e-4.
+            </p>
+            <p>
+                We get the following loss curve (I used tensorboard for some visualizations):
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Loss curve for the training of the denoiser visualized in Tensorboard(Steps on x axis)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                For the first and 5th epoch we get the following results:
+                (The left column shows the ground truth, the middle column shows the noisy input images and the right
+                column the denoised output)
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Result after 1 epoch
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_4.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Result after 5 epochs
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>Out-of-Distribution Testing</p>
+            <p>
+                Our model was trained on images, that have added noise of 0.5. We can now try to denoise images that
+                were generated with a different amount of noise. Here we visualize the results on various levels of
+                noise from 0 to 1:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/1_2_5.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Results on digits from the test set with varying noise levels.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Part 2: Training a Single-Step Denoising U-Net</h3>
+            <p>
+                Now we can start with diffusion and we will orient ourselves on the <a
+                    href="https://arxiv.org/abs/2006.11239">Denoising Diffusion Probabilistic Models</a> paper.
+            </p>
+            <p>
+                We first have to make a small change to our model. Instead of predicting the denoised image x, we will
+                try
+                to predict the
+                added noise to the image:
+            </p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mtable displaystyle="true">
+                    <mlabeledtr>
+                        <mtd>
+                            <mi>L</mi>
+                            <mo>=</mo>
+                            <msub>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi mathvariant="double-struck">E</mi>
+                                </mrow>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>&#x3F5;</mi>
+                                    <mo>,</mo>
+                                    <mi>z</mi>
+                                </mrow>
+                            </msub>
+                            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                            <msub>
+                                <mi>&#x3F5;</mi>
+                                <mrow data-mjx-texclass="ORD">
+                                    <mi>&#x3B8;</mi>
+                                </mrow>
+                            </msub>
+                            <mo stretchy="false">(</mo>
+                            <mi>z</mi>
+                            <mo stretchy="false">)</mo>
+                            <mo>&#x2212;</mo>
+                            <mi>&#x3F5;</mi>
+                            <msup>
+                                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">&#x2016;</mo>
+                                <mn>2</mn>
+                            </msup>
+                        </mtd>
+                    </mlabeledtr>
+                </mtable>
+            </math>
+            <p>
+                Here
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <msub>
+                        <mi>&#x3F5;</mi>
+                        <mi>&#x3B8;</mi>
+                    </msub>
+                </math>
+                is the unet that outputs the predicted noise
+            </p>
+            <p>
+                And since we saw in part A already, that one step denoising is not as good as iterative denoising, we
+                will
+                use iterative denoising
+                in this part, with a T of 300, to improve our results.
+            </p>
+            <h4>2.1 Adding Time Conditioning to UNet</h4>
+            <p>
+                There are many ways to inject out timestep T into our unet model, we are adjusting our unet and use a
+                fully
+                connected
+                block to add the time conditioning into our unet:
+            </p>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_1_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our New Unet with the time conditioning
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_1_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Our Fully Connected block
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.2 Training the UNet</h4>
+            <p>
+                After adjusting our unet architecture we can now begin to train our unet.
+                We use the following algorithm, to train our unet for 20 epochs in total, with a batch size of 128
+                and a hidden dimension of 64.
+                For the optimizer we use a learning rate of 1e-3 and a learning rate decay of 0.1^(1.0*num_epochs).
+                The algorithm we are using can be seen in the next image:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_2_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm 1: Training time-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Training the model for 20 epochs, we get the following loss curve:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_2_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Loss curve for the training of the time-conditioned unet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.3 Sampling from the UNet</h4>
+            <p>
+                Since the model is trained now, we can now try to sample some images from the model.
+                We sample some numbers from epoch 5 and 20.
+            </p>
+            <p>
+                We use the following sampling algorithm to sample from our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_3_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm 2: Sampling from time-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                We can see that the result improves with more epochs,
+                the images look more like numbers, but they still don't exactly look perfect, some look like
+                combinations of different numbers:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_3_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample result after epoch 5
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_3_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample result after epoch 20
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.4 Adding Class-Conditioning to UNet</h4>
+            <p>
+                We can now add class conditioning to our model. We can use the class conditioning to improve the
+                performance of our model, telling it which number is which, and at the same time giving us more control
+                during sampling.
+
+            </p>
+            <p>
+                Since we still want our model to work, even when there is no class conditioning, we implement a dropout,
+                where it drops our
+                class conditioning to 0, 10% of the time.
+            </p>
+            <p>
+                We use the follwing method to add our class conditioning to the model:
+                <small>
+                    fc1_t = FCBlock(...)<br>
+                    fc1_c = FCBlock(...)<br>
+                    fc2_t = FCBlock(...)<br>
+                    fc2_c = FCBlock(...)<br><br>
+
+                    t1 = fc1_t(t)<br>
+                    c1 = fc1_c(c)<br>
+                    t2 = fc2_t(t)<br>
+                    c2 = fc2_c(c)<br><br>
+
+                    # Follow diagram to get unflatten.<br>
+                    # Replace the original unflatten with modulated unflatten.<br>
+                    unflatten = c1 * unflatten + t1<br>
+                    # Follow diagram to get up1.<br>
+                    ...<br>
+                    # Replace the original up1 with modulated up1.<br>
+                    up1 = c2 * up1 + t1<br>
+                    # Follow diagram to get the output.
+                </small>
+            </p>
+            <p>
+                We can use the following algorithm to train our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_4_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm: Training class-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Training yields us with the following loss curve this time:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_4_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Loss curve for the training of the class-conditioned unet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4>2.5 Sampling from the Class-Conditioned UNet</h4>
+            <p>
+                We use classifier free guidance and the following adjusted sampling algorithm to sample from our model:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_5_1.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Algorithm 4: Sampling from class-conditioned UNet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Using the conditional variable we are able to control the generated output of our model. We use it to
+                generate 4 of each number:
+                This yields us with the following results:
+            </p>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_5_2.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample result after epoch 5
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-1 g-4 my-4">
+                <div class="col">
+                    <div class="card">
+                        <img src="data2/2_5_3.png" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Sample result after epoch 20
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+
+    </main>
+    <footer class="my-3">
+        <div class="container-lg">
+            <hr>
+            <div style="font-size: .75rem">
+                <div class="text-muted">By Boyong Wu 🌱</div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+
+    </script>
+    <script>
+        const slider = document.getElementById('slider');
+        const gifFrame = document.getElementById('gifFrame');
+
+        slider.addEventListener('input', function () {
+            const frameNumber = this.value;
+            gifFrame.src = `data/morphed/morphed_${frameNumber}.png`;  // Replace with actual frame images
+        });
+
+        const slider2 = document.getElementById('slider2');
+        const gifFrame2 = document.getElementById('gifFrame2');
+
+        slider2.addEventListener('input', function () {
+            const frameNumber = this.value;
+            gifFrame2.src = `data/morphed/morphed_${frameNumber}.png`;  // Replace with actual frame images
+        });
+    </script>
+</body>
+
+</html>
