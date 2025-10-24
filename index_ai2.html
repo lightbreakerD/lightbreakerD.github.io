@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Portfolioo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0b1120;
+      --fg:#e5edff;
+      --muted:#97a3b6;
+      --panel:rgba(255,255,255,0.06);
+      --border:rgba(255,255,255,0.14);
+      --glow1:#a78bfa;
+      --glow2:#f472b6;
+      --glow3:#60a5fa;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--fg);
+      background: radial-gradient(1200px 800px at 10% 10%, #1b2238 0%, transparent 70%),
+                  radial-gradient(900px 700px at 90% 30%, #1a1830 0%, transparent 60%),
+                  radial-gradient(700px 700px at 30% 90%, #0c1627 0%, transparent 70%),
+                  var(--bg);
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient glow background */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: -20vmax;
+      background:
+        radial-gradient(40vmax 35vmax at 15% 25%, rgba(99,102,241,0.25), transparent 60%),
+        radial-gradient(35vmax 30vmax at 85% 35%, rgba(236,72,153,0.22), transparent 60%),
+        radial-gradient(30vmax 28vmax at 30% 80%, rgba(56,189,248,0.18), transparent 70%);
+      filter: blur(50px) saturate(120%);
+      animation: float 36s ease-in-out infinite alternate;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    /* Subtle grain */
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,0.05), transparent 40%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 2px, transparent 4px);
+      mix-blend-mode: overlay;
+      opacity: .35;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+      0% { transform: translate3d(-2%, -1%, 0) rotate(0deg) scale(1); }
+      50% { transform: translate3d(1%, 2%, 0) rotate(6deg) scale(1.02); }
+      100% { transform: translate3d(-1%, -2%, 0) rotate(-5deg) scale(1.01); }
+    }
+
+    .wrap {
+      width: min(1100px, 92vw);
+      margin: clamp(28px, 6vh, 60px) auto clamp(40px, 10vh, 100px);
+      padding: clamp(16px, 2.8vw, 32px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    h1 {
+      margin: 0 0 clamp(18px, 3.2vw, 28px);
+      font-size: clamp(20px, 2.2vw + 20px, 38px);
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      background: linear-gradient(90deg, #e2e8f0 0%, #a5b4fc 40%, #f0abfc 70%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 12px rgba(255,255,255,0.08);
+    }
+
+    /* Responsive grid for links */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: clamp(10px, 1.6vw, 16px);
+      margin-top: clamp(8px, 1.5vw, 16px);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    /* Card-style links */
+    .card {
+      position: relative;
+      display: block;
+      padding: clamp(14px, 1.6vw, 18px) clamp(16px, 2vw, 22px);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.16);
+      text-decoration: none;
+      font-weight: 600;
+      line-height: 1.35;
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+      box-shadow:
+        0 6px 14px rgba(0,0,0,0.25),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+      overflow: hidden;
+      will-change: transform, box-shadow;
+    }
+
+    /* Interactive glow following pointer */
+    .card::before{
+      content:"";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background:
+        radial-gradient(28rem circle at var(--x, 50%) var(--y, 50%), color-mix(in oklab, var(--glow1) 35%, transparent), transparent 35%),
+        radial-gradient(36rem circle at var(--x, 50%) var(--y, 50%), color-mix(in oklab, var(--glow2) 28%, transparent), transparent 45%),
+        radial-gradient(44rem circle at var(--x, 50%) var(--y, 50%), color-mix(in oklab, var(--glow3) 22%, transparent), transparent 55%);
+      opacity: 0;
+      transition: opacity .2s ease;
+      pointer-events: none;
+      filter: blur(4px);
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      left: 14px; right: 14px; bottom: 10px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--glow1), var(--glow2), var(--glow3));
+      opacity: .0;
+      transform: scaleX(.4);
+      transform-origin: center;
+      transition: transform .25s ease, opacity .25s ease;
+      border-radius: 999px;
+      filter: drop-shadow(0 0 8px rgba(99,102,241,0.6));
+    }
+
+    .card:hover,
+    .card:focus-visible{
+      transform: translateY(-3px);
+      border-color: rgba(255,255,255,0.3);
+      box-shadow:
+        0 16px 40px rgba(0,0,0,0.35),
+        0 0 0 8px rgba(167,139,250,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
+    }
+    .card:hover::before,
+    .card:focus-visible::before { opacity: 1; }
+    .card:hover::after,
+    .card:focus-visible::after { opacity: .9; transform: scaleX(1); }
+
+    .divider {
+      border: 0;
+      height: 1px;
+      margin: clamp(18px, 3.6vw, 34px) 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+      box-shadow: 0 0 18px rgba(167,139,250,0.3);
+    }
+
+    /* Focus styles for accessibility */
+    .card:focus-visible {
+      outline: 2px solid transparent;
+      box-shadow:
+        0 16px 36px rgba(0,0,0,0.35),
+        0 0 0 3px rgba(167,139,250,0.45),
+        0 0 0 7px rgba(244,114,182,0.25);
+    }
+
+    ::selection { background: rgba(167,139,250,0.35); color: #fff; }
+
+    /* Reduce motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      body::before { animation: none; }
+      .card,
+      .card::before,
+      .card::after { transition: none !important; }
+    }
+
+    /* Subtle scrollbars */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #64748b, #334155); border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: #0b1120; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>
+        Welcome, this is going to be my personal page in the future! You are a little early :D<br>
+        But feel free to check out some of my projects :)
+    </h1>
+
+    <div class="grid">
+      <a class="card" href="./3/index.html">Morph my Face into Taylor Swift!</a>
+      <a class="card" href="./5/index.html">How does text to image diffusion work?</a>
+      <a class="card" href="./6/index.html">NeRF explained</a>
+      <a class="card" href="./4/index.html">How does the panorama feature on our phones work?</a>
+      <a class="card" href="./2/index.html">This is how Google is morphing 2 single photos into a group photo</a>
+    </div>
+
+    <hr class="divider">
+
+    <div class="grid">
+      <a class="card" href="https://www.squareflick.com">Use the Kanban principle with QR codes to keep track of your consumable materials</a>
+      <a class="card" href="https://time.squareflick.com">Remember the classic hourly chime on casio watches? You can have that again with this Webapp</a>
+      <a class="card" href="https://restock.link">My private chatgpt</a>
+    </div>
+  </div>
+
+  <script>
+    // Make the glow follow the pointer
+    for (const card of document.querySelectorAll('.card')) {
+      card.addEventListener('pointermove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--x', x + 'px');
+        card.style.setProperty('--y', y + 'px');
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.removeProperty('--x');
+        card.style.removeProperty('--y');
+      });
+    }
+  </script>
+</body>
+</html>
