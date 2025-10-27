@@ -1,0 +1,7233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>October 27th Meeting - Linear probing on MLLM (Llava 1.5)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      color-scheme: dark;
+      --bg: #020617;
+      --panel: rgba(5, 9, 23, 0.92);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent: #6ee7ff;
+      --accent-2: #c084fc;
+      --text: #f4f6ff;
+      --muted: rgba(244, 246, 255, 0.72);
+      --code-bg: rgba(9, 13, 30, 0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    main {
+      width: min(1100px, 92vw);
+      margin: 0 auto;
+      padding: 4.5rem 0 6rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero {
+      margin-bottom: 2.5rem;
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: clamp(2.3rem, 4vw, 3.6rem);
+      line-height: 1.15;
+      margin: 0;
+      letter-spacing: -0.02em;
+      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .toc {
+      margin: 0 0 2.5rem;
+      padding: 1.2rem 1.4rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 1.2rem;
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 45px rgba(2, 6, 23, 0.6);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem 1.5rem;
+      align-items: center;
+    }
+
+    .toc-title {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    .toc-links {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem 1.35rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    .toc-links a {
+      color: var(--muted);
+      font-weight: 500;
+      text-decoration: none;
+      padding: 0.2rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .toc-links a:hover {
+      color: var(--accent);
+      border-color: rgba(110, 231, 255, 0.4);
+    }
+
+    .deck {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .panel details {
+      border: 1px solid var(--panel-border);
+      border-radius: 1.5rem;
+      padding: 1.4rem 1.6rem 1.65rem;
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 25px 50px rgba(2, 6, 23, 0.65);
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .panel details:hover {
+      border-color: rgba(110, 231, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    summary {
+      list-style: none;
+      font-size: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 15px rgba(110, 231, 255, 0.7);
+    }
+
+    details[open] summary::before {
+      box-shadow: 0 0 20px rgba(192, 132, 252, 0.55);
+    }
+
+    details[open] summary {
+      margin-bottom: 1.2rem;
+    }
+
+    .panel-body {
+      display: grid;
+      gap: 1rem;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    strong {
+      color: #fdfcff;
+      font-weight: 600;
+    }
+
+    h3 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      color: var(--text);
+    }
+
+    .subpanel {
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 1rem;
+      padding: 1.1rem 1.2rem;
+      background: rgba(255, 255, 255, 0.02);
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    ol,
+    ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+    }
+
+    li {
+      margin-bottom: 0.35rem;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      padding: 1rem 1.2rem;
+      margin: 0;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Space Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+      color: #d8f9ff;
+    }
+
+    figure {
+      margin: 0;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.015);
+      padding: 0.65rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    figure img {
+      width: 100%;
+      display: block;
+      border-radius: 0.9rem;
+      box-shadow: 0 20px 45px rgba(3, 7, 18, 0.7);
+      transition: transform 0.4s ease;
+    }
+
+    figure img:hover {
+      transform: scale(1.02);
+    }
+
+    .viz.zoomable {
+      max-width: 520px;
+      margin: 0 auto;
+      cursor: zoom-in;
+      position: relative;
+    }
+
+    .viz.zoomable img {
+      max-height: 360px;
+      object-fit: cover;
+    }
+
+    .viz.zoomable::after {
+      content: 'Click to enlarge';
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .final-diagram-intro {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .llava-diagram {
+      display: grid;
+      gap: 1.8rem;
+      padding: 1.5rem;
+      border-radius: 1.5rem;
+      border: 1px solid var(--panel-border);
+      background: rgba(2, 6, 23, 0.55);
+      backdrop-filter: blur(12px);
+    }
+
+    .layer-track {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .layer-node {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(10, 14, 40, 0.75);
+      color: var(--text);
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1rem;
+      border-radius: 999px;
+      padding: 0.55rem 0.95rem;
+      min-width: 52px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .layer-node:hover {
+      border-color: rgba(110, 231, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .layer-node.is-active {
+      background: linear-gradient(120deg, rgba(110, 231, 255, 0.25), rgba(192, 132, 252, 0.25));
+      border-color: rgba(110, 231, 255, 0.8);
+      box-shadow: 0 8px 25px rgba(110, 231, 255, 0.25);
+    }
+
+    .layer-info {
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(4, 7, 20, 0.75);
+      padding: 1.5rem;
+      display: grid;
+      gap: 1.2rem;
+    }
+
+    .layer-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .layer-label {
+      font-size: 0.85rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 0.3rem;
+    }
+
+    .layer-step-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .layer-step-tags span {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .metric-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .metric-card {
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.015);
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .metric-card .metric-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .metric-card .metric-value {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .metric-card .metric-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .layer-visuals {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .layer-visuals figure {
+      max-width: 520px;
+      margin: 0;
+      justify-self: center;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .chart-card {
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.015);
+      padding: 1rem;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .chart-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .chart-card canvas {
+      width: 100%;
+      height: 140px;
+      border-radius: 0.75rem;
+      background: rgba(4, 7, 20, 0.7);
+    }
+
+    .chart-card small {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .log-grid {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .log-card {
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 1rem 1.1rem;
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .log-card summary {
+      font-size: 0.95rem;
+    }
+
+    .log-card table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .log-card th,
+    .log-card td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0.35rem 0.35rem;
+      text-align: left;
+      color: var(--muted);
+    }
+
+    .layer-table-wrapper {
+      margin-top: 2rem;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1.25rem;
+    }
+
+    .layer-table-wrapper h3 {
+      margin: 0 0 0.8rem;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    .layer-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .layer-summary-table th,
+    .layer-summary-table td {
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: left;
+      color: var(--muted);
+    }
+
+    .layer-summary-table th {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.75rem;
+      color: var(--text);
+    }
+
+    .callout {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .progress-track {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 10;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+      transition: width 0.1s ease;
+    }
+
+    .background-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 0);
+      background-size: 40px 40px;
+      opacity: 0.35;
+      z-index: 0;
+      mask-image: radial-gradient(circle at top, rgba(0, 0, 0, 0.8), transparent 65%);
+    }
+
+    .background-aurora {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 20% 20%, rgba(110, 231, 255, 0.35), transparent 45%),
+        radial-gradient(circle at 80% 10%, rgba(192, 132, 252, 0.4), transparent 55%),
+        radial-gradient(circle at 60% 80%, rgba(14, 165, 233, 0.25), transparent 60%);
+      filter: blur(90px);
+      opacity: 0.6;
+      z-index: 1;
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+
+    .collapsible-log {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1.1rem;
+      padding: 0.85rem;
+      background: rgba(255, 255, 255, 0.015);
+      position: relative;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .collapsible-log:not(.expanded) pre {
+      max-height: 180px;
+      overflow: hidden;
+    }
+
+    .collapsible-log:not(.expanded)::after {
+      content: '';
+      position: absolute;
+      left: 0.85rem;
+      right: 0.85rem;
+      bottom: 3.2rem;
+      height: 60px;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0) 0%, rgba(2, 6, 23, 0.9) 100%);
+      pointer-events: none;
+    }
+
+    .collapsible-log.expanded::after {
+      display: none;
+    }
+
+    .expand-hint {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+
+    .toggle-log {
+      justify-self: flex-start;
+      border: 1px solid rgba(110, 231, 255, 0.4);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      padding: 0.35rem 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .toggle-log:hover {
+      background: rgba(110, 231, 255, 0.12);
+      color: var(--accent);
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 2rem;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: min(1200px, 90vw);
+      max-height: 90vh;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.65);
+    }
+
+    .lightbox button {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      background: rgba(2, 6, 23, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate3d(-20px, 0, 0) scale(1.05);
+      }
+      to {
+        transform: translate3d(10px, -10px, 0) scale(1.15);
+      }
+    }
+
+    @media (max-width: 720px) {
+      summary {
+        font-size: 1.05rem;
+      }
+
+      pre {
+        font-size: 0.85rem;
+      }
+
+      .layer-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .layer-track {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-track">
+    <div class="progress-bar"></div>
+  </div>
+  <div class="background-grid"></div>
+  <div class="background-aurora"></div>
+  <main>
+    <header class="hero">
+      <h1>October 27th Meeting - Linear probing on MLLM (Llava 1.5)</h1>
+    </header>
+    <nav class="toc" aria-label="Table of contents">
+      <span class="toc-title">Table of Contents</span>
+      <ol class="toc-links">
+        <li><a href="#recap">Recap last meeting</a></li>
+        <li><a href="#this-meeting">This meeting</a></li>
+        <li><a href="#lrz">LRZ cluster detour</a></li>
+        <li><a href="#first-layer">Feature tokens first layer</a></li>
+        <li><a href="#final">Final result</a></li>
+      </ol>
+    </nav>
+    <article class="deck">
+      <section class="panel" id="recap">
+        <details open>
+          <summary>Recap last meeting:</summary>
+          <div class="panel-body">
+            <p>Did Linear probing on the ViT layers of CLIP:</p>
+            <p>(Hyperparameters were not optimized for best possible result, big learning rate is used for faster training, not too many epochs)</p>
+            <p>CLIP L14 is giving me Val mIoU 0.3330</p>
+            <p>CLIP B16 yields less: 0.31 mIoU</p>
+            <p>These results include an optimization, that other benchmarks did, including the CLS token for segmentation by concatenating it to the patches.</p>
+            <p>The MLLM tokens look like this [602:4096] in this case for Llava 1.5:</p>
+            <pre>['&lt;s&gt;', '▁US', 'ER', ':', '▁', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;', '&lt;image&gt;’,[….576 image tokens in total] ‘&lt;image&gt;',, '▁', '&lt;0x0A&gt;', 'Ident', 'ify', '▁regions', '▁that', '▁correspond', '▁to', '▁objects', '.', '▁Descri', 'be', '▁each', '▁patch', '▁briefly', '.', '&lt;0x0A&gt;', 'ASS', 'IST', 'ANT', ':']</pre>
+            <p>We just take the image tokens only and linear probe each layer.</p>
+            <p>Linear Probing for Segmentation on MLLM Layers is unconventional.</p>
+          </div>
+        </details>
+      </section>
+      <section class="panel" id="this-meeting">
+        <details open>
+          <summary>This meeting: Linear probing on MLLM (Llava 1.5)</summary>
+          <div class="panel-body">
+            <div class="subpanel">
+              <h3>Todo for this meeting:</h3>
+              <ol>
+                <li>General prompt to just find the best layer for segmentation, then use that layer for next step</li>
+                <li>Use that layer to try specific prompt and see how that performance decreases or increases</li>
+              </ol>
+            </div>
+            <p>Use the following prompts:</p>
+            <p>For the 1. Task “<strong>Describe the image in detail</strong>”</p>
+            <p>For the 2. Task “<strong>Describe the [category] in the image in detail</strong>”</p>
+            <p>(Hmm, actually according to the paper “Words That Make Language Models Perceive” we should use a prompt like this for the second task: ”<strong>Imagine what it would look like to see A [category]</strong>”)</p>
+            <div class="subpanel">
+              <h3>Probing CLIP again to set more comparable baseline</h3>
+              <p>We previously probed CLIP L14 with concatenation of CLS token which was 0.33mIou, but Llava uses CLIP L14@336 and they drop the CLS token, so:</p>
+              <p><strong>CLIP L14 without CLS token:</strong></p>
+              <div class="collapsible-log">
+                <span class="expand-hint">Expandable log</span>
+                <pre>Epoch 001 | loss 2.3412 | train mIoU 0.2091 acc 0.5839 | test mIoU 0.2042 acc 0.5805
+Epoch 002 | loss 1.4925 | train mIoU 0.2766 acc 0.6232 | test mIoU 0.2593 acc 0.6161
+Epoch 003 | loss 1.3208 | train mIoU 0.3055 acc 0.6390 | test mIoU 0.2813 acc 0.6302
+Epoch 004 | loss 1.2458 | train mIoU 0.3222 acc 0.6484 | test mIoU 0.2900 acc 0.6382
+Epoch 005 | loss 1.2059 | train mIoU 0.3358 acc 0.6526 | test mIoU 0.2971 acc 0.6407
+Epoch 006 | loss 1.1672 | train mIoU 0.3435 acc 0.6572 | test mIoU 0.3015 acc 0.6442
+Epoch 007 | loss 1.1573 | train mIoU 0.3509 acc 0.6602 | test mIoU 0.3044 acc 0.6456
+Epoch 008 | loss 1.1382 | train mIoU 0.3565 acc 0.6620 | test mIoU 0.3054 acc 0.6473
+Epoch 009 | loss 1.1270 | train mIoU 0.3584 acc 0.6634 | test mIoU 0.3041 acc 0.6479
+Epoch 010 | loss 1.1214 | train mIoU 0.3637 acc 0.6655 | test mIoU 0.3077 acc 0.6492
+Epoch 011 | loss 1.1136 | train mIoU 0.3677 acc 0.6667 | test mIoU 0.3091 acc 0.6502
+Epoch 012 | loss 1.1062 | train mIoU 0.3726 acc 0.6677 | test mIoU 0.3121 acc 0.6500
+Epoch 013 | loss 1.1044 | train mIoU 0.3759 acc 0.6684 | test mIoU 0.3116 acc 0.6509
+Epoch 014 | loss 1.0954 | train mIoU 0.3786 acc 0.6697 | test mIoU 0.3144 acc 0.6515
+Epoch 015 | loss 1.0950 | train mIoU 0.3776 acc 0.6701 | test mIoU 0.3103 acc 0.6512</pre>
+                <button type="button" class="toggle-log">Expand log</button>
+              </div>
+              <p><strong>mIoU of clip l14 without CLS token was around 0.31</strong></p>
+            </div>
+            <div class="subpanel">
+              <h3>Now on clip L14@336</h3>
+              <p><strong>mIoU of clip l14@336 around 0.29</strong></p>
+              <p>max: Test mIoU: 0.3012 | Pixel Acc: 0.6071</p>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/image.png" alt="image.png" />
+              </figure>
+              <p>Could have reached 30% with longer training:</p>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/image%201.png" alt="image.png" />
+              </figure>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/output.png" alt="output.png" />
+              </figure>
+              <div class="collapsible-log">
+                <span class="expand-hint">Expandable log</span>
+                <pre>Epoch 001 | loss 2.7653 | train mIoU 0.1917 acc 0.5302 | test mIoU 0.1887 acc 0.5268
+Epoch 002 | loss 1.9456 | train mIoU 0.2539 acc 0.5673 | test mIoU 0.2455 acc 0.5633
+Epoch 003 | loss 1.7592 | train mIoU 0.2812 acc 0.5836 | test mIoU 0.2644 acc 0.5783
+Epoch 004 | loss 1.6664 | train mIoU 0.2992 acc 0.5939 | test mIoU 0.2775 acc 0.5858
+Epoch 005 | loss 1.6198 | train mIoU 0.3110 acc 0.5994 | test mIoU 0.2835 acc 0.5912
+Epoch 006 | loss 1.5736 | train mIoU 0.3136 acc 0.6009 | test mIoU 0.2834 acc 0.5910
+Epoch 007 | loss 1.5504 | train mIoU 0.3266 acc 0.6041 | test mIoU 0.2920 acc 0.5937
+Epoch 008 | loss 1.5252 | train mIoU 0.3290 acc 0.6074 | test mIoU 0.2926 acc 0.5967
+Epoch 009 | loss 1.5010 | train mIoU 0.3320 acc 0.6071 | test mIoU 0.2935 acc 0.5960
+Epoch 010 | loss 1.5004 | train mIoU 0.3368 acc 0.6131 | test mIoU 0.2953 acc 0.6014
+Epoch 011 | loss 1.4815 | train mIoU 0.3408 acc 0.6132 | test mIoU 0.2975 acc 0.6011
+Epoch 012 | loss 1.4702 | train mIoU 0.3421 acc 0.6171 | test mIoU 0.2974 acc 0.6059
+Epoch 013 | loss 1.4632 | train mIoU 0.3442 acc 0.6173 | test mIoU 0.2964 acc 0.6035
+Epoch 014 | loss 1.4539 | train mIoU 0.3482 acc 0.6178 | test mIoU 0.2999 acc 0.6051
+Epoch 015 | loss 1.4472 | train mIoU 0.3503 acc 0.6202 | test mIoU 0.3012 acc 0.6071</pre>
+                <button type="button" class="toggle-log">Expand log</button>
+              </div>
+              <p><strong>Why is quality worse even if we have larger input?</strong></p>
+              <p>Maybe:</p>
+              <ul>
+                <li>ViT CLIP L14 @336 is just the normal L14 trained:<br />
+                  <em>For the ViT-L/14 we also pre-train at a higher 336 pixel resolution for one additional epoch to boost performance similar to FixRes (Touvron et al., 2019). We denote this model as ViT-L/14@336px. (Clip paper page 5)</em>
+                </li>
+                <li>Other paper saw this too:<br />
+                  “Image Resolution for Zero-Shot Classification We report the evaluation results for both SAM-CLIP and CLIP models using the 224px image resolution. However, we found that SAM-CLIP benefits from the 336px resolution, <strong>whereas the performance of CLIP models deteriorates (they exhibit worse accuracy)</strong> (<a href="https://arxiv.org/pdf/2310.15308">https://arxiv.org/pdf/2310.15308</a> Page 15)”
+                </li>
+              </ul>
+              <h3>Large focus was making the Data and Train pipeline work with unprecedented large amounts of data</h3>
+              <p>Problem: The entire ADE20k dataset, including train and validation is about 20k+2k images, on disk that is less than 1GB of space.</p>
+              <p><strong>But the hidden features of a single MLLM layer are already almost 100GB on disk, only loaded to RAM thats about 150GB, so we are dealing with 150x the data:</strong></p>
+              <p>Total RAM: 1081.82 GB (Entire Server)<br /><strong>Used RAM: 152.85 GB</strong></p>
+              <p>What I did:</p>
+              <ul>
+                <li>Implemented a dataset sharding method, that reduces memory usage, by only loading one .pt file at a time, that is 2GB, caching the features. (It basically scans all the pt files, remembers an index and then for each index it knows in which .pt file to look, loads that one and returns the feature with the corresponding index.)</li>
+                <li>Implement a Dataloader that reads data shard by shard (this turns out to be a bottleneck later)</li>
+                <li>Reimplemented training pipeline to work with the dataset and loader.</li>
+              </ul>
+              <p>After that worked I started training, but the issue was that it was extremely slow.</p>
+              <p>I started trying to diagnose the issue and later found it:</p>
+              <p>It takes about 25 seconds to load one single batch… The batch size was 64 (its small compared to 22k images in one epoch including validation)</p>
+              <p>The issue was, IO bottleneck, training is done with suffling the dataset, so it would look inside the 41 files, each over 2GB, to pull out one single feature, each batch in the worst case creates a 140 GB of IO…</p>
+              <div class="subpanel">
+                <p>A modern NVMe SSD (PCIe 3.0)</p>
+                <p>Typical read speed: 3 GB/s (theoretical)</p>
+                <p>Time = 140 GB ÷ 3 GB/s → 46.7 s</p>
+                <p>≈ 45–50 seconds on a fast NVMe SSD</p>
+              </div>
+              <p>I did not find a solution to this, since training with so much data creates a bunch of new issues. I am not familiar with training with large amounts of data, maybe its normal that its this slow.</p>
+              <p>My solution then was to not shuffle the dataset and load them shard by shard:</p>
+              <p>Train improvement is much slower, and training a model without shuffling is generally a bad approach…</p>
+              <div class="collapsible-log">
+                <span class="expand-hint">Expandable log</span>
+                <pre>Epoch 001 | loss 3.3480 | train mIoU 0.0953 acc 0.3819 | test mIoU 0.0950 acc 0.3765
+Epoch 002 | loss 2.4068 | train mIoU 0.1875 acc 0.4820 | test mIoU 0.1860 acc 0.4764
+Epoch 003 | loss 2.1157 | train mIoU 0.2297 acc 0.5212 | test mIoU 0.2239 acc 0.5147
+Epoch 004 | loss 1.9782 | train mIoU 0.2532 acc 0.5413 | test mIoU 0.2427 acc 0.5337
+Epoch 005 | loss 1.8941 | train mIoU 0.2692 acc 0.5533 | test mIoU 0.2543 acc 0.5451
+Epoch 006 | loss 1.8374 | train mIoU 0.2808 acc 0.5616 | test mIoU 0.2627 acc 0.5530
+Epoch 007 | loss 1.7886 | train mIoU 0.2900 acc 0.5683 | test mIoU 0.2691 acc 0.5593
+Epoch 008 | loss 1.7544 | train mIoU 0.2972 acc 0.5731 | test mIoU 0.2729 acc 0.5638
+Epoch 009 | loss 1.7240 | train mIoU 0.3031 acc 0.5771 | test mIoU 0.2763 acc 0.5675
+Epoch 010 | loss 1.6971 | train mIoU 0.3080 acc 0.5805 | test mIoU 0.2791 acc 0.5707
+Epoch 011 | loss 1.6756 | train mIoU 0.3122 acc 0.5834 | test mIoU 0.2819 acc 0.5734
+Epoch 012 | loss 1.6572 | train mIoU 0.3157 acc 0.5860 | test mIoU 0.2836 acc 0.5757
+Epoch 013 | loss 1.6431 | train mIoU 0.3190 acc 0.5883 | test mIoU 0.2850 acc 0.5776
+Epoch 014 | loss 1.6284 | train mIoU 0.3216 acc 0.5901 | test mIoU 0.2863 acc 0.5791
+Epoch 015 | loss 1.6155 | train mIoU 0.3239 acc 0.5919 | test mIoU 0.2878 acc 0.5806</pre>
+                <button type="button" class="toggle-log">Expand log</button>
+              </div>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/output_shuffle_off.png" alt="output_shuffle_off.png" />
+              </figure>
+              <h3>The final solution was to request huge amounts of RAM</h3>
+              <p>By requesting hundreds of GB of CPU Ram, i was able to load the entire dataset once into RAM, still shuffle and train without creating a lot of disk IO. It finally worked on MLLM layers.</p>
+            </div>
+          </div>
+        </details>
+      </section>
+      <section class="panel" id="lrz">
+        <details open>
+          <summary>A Brief detour about the LRZ Cluster</summary>
+          <div class="panel-body">
+            <p>Some interesting stuff I realized about the LRZ cluster:</p>
+            <div class="subpanel">
+              <h3>Your Job Priority: How LRZ wrongly calculates your usage and how it is easily tricked…</h3>
+              <p>How fast a user job is processed is based on their fairshare, which is based on their total usage which is based on their billing for each job.</p>
+              <p>But the way the LRZ cluster is set up, was not quite thought through, it seems like a basic setting was used.</p>
+              <p>If we look at the following 2 jobs:</p>
+              <div class="callout">
+                <p>Job 1:</p>
+                <p>AllocTRES=cpu=16,mem=364G,node=1,billing=745584,gres/gpu=16</p>
+                <p>TresPerNode=gres/gpu:16</p>
+                <p>Job 2 (my job):</p>
+                <p>AllocTRES=cpu=8,mem=128G,node=1,billing=262165,gres/gpu=1</p>
+                <p>TresPerNode=gres/gpu:3g.40gb</p>
+              </div>
+              <p>Job 1 uses 16 GPUs while job 2 uses 3/7 of one GPU, so not even one. Why is the billing for the first 16 GPU job only 2.8x larger?</p>
+              <p>Because the LRZ Cluster weights assigned CPU RAM way way more than anything else, like GPUs.</p>
+              <p><strong>→ It doesn’t really matter what kind of GPU you use and how many, what matters way more is the Amount of RAM you assigned in total. So try to keep RAM as low as possible. Overwrite the default RAM assignment to something lower if possible.</strong></p>
+            </div>
+            <div class="subpanel">
+              <h3>The biggest abuser of the LRZ Cluster: di97fer</h3>
+              <pre>Account NormShares NormUsage
+di97fer     0.000605       0.087005</pre>
+              <p>Saw this person in front of my queue often and checked out his account: This person is using 143 times his assigned compute consistently, by queuing his jobs for a long time he gets to run them, since jobs that waited for 2 days will get priority. Last night i checked 2 of his jobs, they were using 16 GPUs each, and were interactive bash jobs, that ran until the 48h timeout. Very weird…</p>
+            </div>
+            <div class="subpanel">
+              <h3>Sanghwan’s jobs are too “nice”</h3>
+              <p>I just checked something you sent me, your bashrc file, where you define jobs the following way:</p>
+              <pre>srun --partition=mcml-hgx-h100-94x4 --qos=mcml --nice=10000 --gres=gpu:1 --nodes=1 --time=1:00:00 --mem=40G --pty bash</pre>
+              <p><strong>→ Not sure whether you know this and do this on purpose but: By setting a high nice value, your job gets deprioritized, causing you to wait longer. 10000 nice is a high value, without that value, or a 0, you would get assigned a node a little faster, which might be helpful to you since this is an interactive bash request.</strong></p>
+            </div>
+            <p>okay back to results</p>
+          </div>
+        </details>
+      </section>
+      <section class="panel" id="first-layer">
+        <details open>
+          <summary>Extracting feature tokens first layer</summary>
+          <div class="panel-body">
+            <p>I am efficiently using resources, full memory and wattage for feature extraction:</p>
+            <figure class="viz zoomable">
+              <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/image%202.png" alt="image.png" />
+            </figure>
+            <p>But having Issues optimizing training of the linear probe with full GPU util, didnt manage to get wattage to full 400W, maybe because the linear probe is just a one layer few para model and its more about loading data, which is the bottleneck.</p>
+            <p>But requesting over 100GB of RAM, while not disturbing anyone since there is plenty available, nor using a lot of electricity since I only use 1 GPU, my “fairshare” is totally trash now and I have been deprioritized lol, anyways:</p>
+            <div class="subpanel">
+              <h3>Linear Probe first layer result</h3>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/image%203.png" alt="image.png" />
+              </figure>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/image%204.png" alt="image.png" />
+              </figure>
+              <div class="collapsible-log">
+                <span class="expand-hint">Expandable log</span>
+                <pre>Epoch 001 | loss 2.3701 | train mIoU 0.2195 acc 0.5189 | test mIoU 0.2127 acc 0.5148
+Epoch 002 | loss 2.0016 | train mIoU 0.2486 acc 0.5448 | test mIoU 0.2383 acc 0.5399
+Epoch 003 | loss 1.8927 | train mIoU 0.2575 acc 0.5532 | test mIoU 0.2415 acc 0.5462
+Epoch 004 | loss 1.8325 | train mIoU 0.2652 acc 0.5540 | test mIoU 0.2480 acc 0.5463
+Epoch 005 | loss 1.7847 | train mIoU 0.2736 acc 0.5668 | test mIoU 0.2532 acc 0.5592
+Epoch 006 | loss 1.7506 | train mIoU 0.2814 acc 0.5733 | test mIoU 0.2580 acc 0.5653
+Epoch 007 | loss 1.7193 | train mIoU 0.2828 acc 0.5736 | test mIoU 0.2581 acc 0.5655
+Epoch 008 | loss 1.6984 | train mIoU 0.2856 acc 0.5757 | test mIoU 0.2616 acc 0.5673
+Epoch 009 | loss 1.6781 | train mIoU 0.2943 acc 0.5767 | test mIoU 0.2665 acc 0.5676
+Epoch 010 | loss 1.6624 | train mIoU 0.2938 acc 0.5790 | test mIoU 0.2662 acc 0.5691
+Epoch 011 | loss 1.6541 | train mIoU 0.2986 acc 0.5816 | test mIoU 0.2707 acc 0.5731
+Epoch 012 | loss 1.6353 | train mIoU 0.2995 acc 0.5806 | test mIoU 0.2697 acc 0.5707
+Epoch 013 | loss 1.6230 | train mIoU 0.3004 acc 0.5834 | test mIoU 0.2724 acc 0.5761
+Epoch 014 | loss 1.6126 | train mIoU 0.3026 acc 0.5835 | test mIoU 0.2719 acc 0.5750
+Epoch 015 | loss 1.6038 | train mIoU 0.3037 acc 0.5908 | test mIoU 0.2731 acc 0.5813
+Epoch 016 | loss 1.6015 | train mIoU 0.3039 acc 0.5825 | test mIoU 0.2702 acc 0.5732
+Epoch 017 | loss 1.5899 | train mIoU 0.3051 acc 0.5909 | test mIoU 0.2728 acc 0.5817
+Epoch 018 | loss 1.5832 | train mIoU 0.3092 acc 0.5918 | test mIoU 0.2750 acc 0.5815
+Epoch 019 | loss 1.5809 | train mIoU 0.3051 acc 0.5912 | test mIoU 0.2731 acc 0.5811
+Epoch 020 | loss 1.5774 | train mIoU 0.3057 acc 0.5885 | test mIoU 0.2709 acc 0.5781</pre>
+                <button type="button" class="toggle-log">Expand log</button>
+              </div>
+              <figure class="viz zoomable">
+                <img src="October%2027th%20Meeting%20-%20Linear%20probing%20on%20MLLM/image%205.png" alt="image.png" />
+              </figure>
+              <p>Final:</p>
+              <p><strong>Test mIoU: 0.2750 | Pixel Acc: 0.5815</strong></p>
+              <p>Okay that was our first layer, lets probe the following 10 layers:</p>
+              <p>1,2,4,8,12,16,20,24,28,31,32</p>
+              <p>Its actually kind of tedious because each layer takes over an hour. Getting feedback on final code changes takes like one hour until I get a result, and when I thought everything was working, Slurm killed my job before any result was saved because the default 1h limit was reached…</p>
+            </div>
+          </div>
+        </details>
+      </section>
+      <section class="panel" id="final">
+        <details open>
+          <summary>Okay here the final result</summary>
+          <div class="panel-body">
+            <p class="final-diagram-intro">Interactive map of Llava 1.5 MLLM layers probed on ADE20K using linear probes. Select any layer to inspect its validation curves, image predictions, and raw TensorBoard logs.</p>
+            <div class="llava-diagram" data-diagram>
+              <div class="layer-track" id="layer-track" aria-label="Llava layers timeline"></div>
+              <div class="layer-info" id="layer-info">
+                <p class="diagram-placeholder">Loading Llava layers…</p>
+              </div>
+            </div>
+            <div class="layer-table-wrapper">
+              <h3>Layer snapshot overview</h3>
+              <div class="table-scroll">
+                <table class="layer-summary-table" id="layer-table">
+                  <thead>
+                    <tr>
+                      <th>Layer</th>
+                      <th>Best mIoU (val)</th>
+                      <th>Step</th>
+                      <th>Best Pixel Acc (val)</th>
+                      <th>Step</th>
+                      <th>Lowest Loss (val)</th>
+                      <th>Step</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </details>
+      </section>
+    </article>
+  </main>
+  <script type="application/json" id="layer-data">[
+  {
+    "layer": 1,
+    "image": "finalresults/pics/llava_val_vis_layer1.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 2.3772072792053223
+        },
+        {
+          "step": 2,
+          "value": 2.0134921073913574
+        },
+        {
+          "step": 3,
+          "value": 1.901835322380066
+        },
+        {
+          "step": 4,
+          "value": 1.8436260223388672
+        },
+        {
+          "step": 5,
+          "value": 1.8036458492279053
+        },
+        {
+          "step": 6,
+          "value": 1.769394874572754
+        },
+        {
+          "step": 7,
+          "value": 1.7459077835083008
+        },
+        {
+          "step": 8,
+          "value": 1.7210317850112915
+        },
+        {
+          "step": 9,
+          "value": 1.6993303298950195
+        },
+        {
+          "step": 10,
+          "value": 1.6853423118591309
+        },
+        {
+          "step": 11,
+          "value": 1.6711558103561401
+        },
+        {
+          "step": 12,
+          "value": 1.6592261791229248
+        },
+        {
+          "step": 13,
+          "value": 1.6529265642166138
+        },
+        {
+          "step": 14,
+          "value": 1.641592264175415
+        },
+        {
+          "step": 15,
+          "value": 1.6333085298538208
+        },
+        {
+          "step": 16,
+          "value": 1.6275049448013306
+        },
+        {
+          "step": 17,
+          "value": 1.6195436716079712
+        },
+        {
+          "step": 18,
+          "value": 1.6122519969940186
+        },
+        {
+          "step": 19,
+          "value": 1.605927586555481
+        },
+        {
+          "step": 20,
+          "value": 1.603447437286377
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 2.098375082015991
+        },
+        {
+          "step": 2,
+          "value": 1.9758750200271606
+        },
+        {
+          "step": 3,
+          "value": 1.88881254196167
+        },
+        {
+          "step": 4,
+          "value": 1.868499994277954
+        },
+        {
+          "step": 5,
+          "value": 1.8040000200271606
+        },
+        {
+          "step": 6,
+          "value": 1.7923749685287476
+        },
+        {
+          "step": 7,
+          "value": 1.7801250219345093
+        },
+        {
+          "step": 8,
+          "value": 1.7506250143051147
+        },
+        {
+          "step": 9,
+          "value": 1.7392499446868896
+        },
+        {
+          "step": 10,
+          "value": 1.7136249542236328
+        },
+        {
+          "step": 11,
+          "value": 1.7021249532699585
+        },
+        {
+          "step": 12,
+          "value": 1.7060625553131104
+        },
+        {
+          "step": 13,
+          "value": 1.690000057220459
+        },
+        {
+          "step": 14,
+          "value": 1.6844375133514404
+        },
+        {
+          "step": 15,
+          "value": 1.6676249504089355
+        },
+        {
+          "step": 16,
+          "value": 1.6690624952316284
+        },
+        {
+          "step": 17,
+          "value": 1.660249948501587
+        },
+        {
+          "step": 18,
+          "value": 1.6499375104904175
+        },
+        {
+          "step": 19,
+          "value": 1.6599375009536743
+        },
+        {
+          "step": 20,
+          "value": 1.6428749561309814
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.2201562523841858
+        },
+        {
+          "step": 2,
+          "value": 0.24314376711845398
+        },
+        {
+          "step": 3,
+          "value": 0.2561705410480499
+        },
+        {
+          "step": 4,
+          "value": 0.26850536465644836
+        },
+        {
+          "step": 5,
+          "value": 0.275214284658432
+        },
+        {
+          "step": 6,
+          "value": 0.2763136029243469
+        },
+        {
+          "step": 7,
+          "value": 0.28683823347091675
+        },
+        {
+          "step": 8,
+          "value": 0.2905614674091339
+        },
+        {
+          "step": 9,
+          "value": 0.2873314619064331
+        },
+        {
+          "step": 10,
+          "value": 0.29429951310157776
+        },
+        {
+          "step": 11,
+          "value": 0.2958376407623291
+        },
+        {
+          "step": 12,
+          "value": 0.29763510823249817
+        },
+        {
+          "step": 13,
+          "value": 0.30103763937950134
+        },
+        {
+          "step": 14,
+          "value": 0.3005508780479431
+        },
+        {
+          "step": 15,
+          "value": 0.30428028106689453
+        },
+        {
+          "step": 16,
+          "value": 0.30530041456222534
+        },
+        {
+          "step": 17,
+          "value": 0.3100464940071106
+        },
+        {
+          "step": 18,
+          "value": 0.3038689196109772
+        },
+        {
+          "step": 19,
+          "value": 0.3078633248806
+        },
+        {
+          "step": 20,
+          "value": 0.3095453083515167
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.21387876570224762
+        },
+        {
+          "step": 2,
+          "value": 0.23302249610424042
+        },
+        {
+          "step": 3,
+          "value": 0.24277059733867645
+        },
+        {
+          "step": 4,
+          "value": 0.25238096714019775
+        },
+        {
+          "step": 5,
+          "value": 0.25397178530693054
+        },
+        {
+          "step": 6,
+          "value": 0.2535873055458069
+        },
+        {
+          "step": 7,
+          "value": 0.2625703513622284
+        },
+        {
+          "step": 8,
+          "value": 0.26647481322288513
+        },
+        {
+          "step": 9,
+          "value": 0.2602998912334442
+        },
+        {
+          "step": 10,
+          "value": 0.26693251729011536
+        },
+        {
+          "step": 11,
+          "value": 0.26804524660110474
+        },
+        {
+          "step": 12,
+          "value": 0.26892831921577454
+        },
+        {
+          "step": 13,
+          "value": 0.268331915140152
+        },
+        {
+          "step": 14,
+          "value": 0.26725560426712036
+        },
+        {
+          "step": 15,
+          "value": 0.2723945677280426
+        },
+        {
+          "step": 16,
+          "value": 0.2760595381259918
+        },
+        {
+          "step": 17,
+          "value": 0.2746073305606842
+        },
+        {
+          "step": 18,
+          "value": 0.27221038937568665
+        },
+        {
+          "step": 19,
+          "value": 0.2742777466773987
+        },
+        {
+          "step": 20,
+          "value": 0.27561938762664795
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.5120505094528198
+        },
+        {
+          "step": 2,
+          "value": 0.5342317819595337
+        },
+        {
+          "step": 3,
+          "value": 0.5521687269210815
+        },
+        {
+          "step": 4,
+          "value": 0.5494457483291626
+        },
+        {
+          "step": 5,
+          "value": 0.5620009303092957
+        },
+        {
+          "step": 6,
+          "value": 0.5578972697257996
+        },
+        {
+          "step": 7,
+          "value": 0.5702647566795349
+        },
+        {
+          "step": 8,
+          "value": 0.5739244222640991
+        },
+        {
+          "step": 9,
+          "value": 0.5696366429328918
+        },
+        {
+          "step": 10,
+          "value": 0.5751917958259583
+        },
+        {
+          "step": 11,
+          "value": 0.5753967761993408
+        },
+        {
+          "step": 12,
+          "value": 0.5782814621925354
+        },
+        {
+          "step": 13,
+          "value": 0.5801621079444885
+        },
+        {
+          "step": 14,
+          "value": 0.5771574378013611
+        },
+        {
+          "step": 15,
+          "value": 0.5860068798065186
+        },
+        {
+          "step": 16,
+          "value": 0.5805102586746216
+        },
+        {
+          "step": 17,
+          "value": 0.5824927687644958
+        },
+        {
+          "step": 18,
+          "value": 0.5871237516403198
+        },
+        {
+          "step": 19,
+          "value": 0.5820360779762268
+        },
+        {
+          "step": 20,
+          "value": 0.5851427316665649
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.5071922540664673
+        },
+        {
+          "step": 2,
+          "value": 0.5288040637969971
+        },
+        {
+          "step": 3,
+          "value": 0.5463470816612244
+        },
+        {
+          "step": 4,
+          "value": 0.5433425307273865
+        },
+        {
+          "step": 5,
+          "value": 0.5545588731765747
+        },
+        {
+          "step": 6,
+          "value": 0.5493938326835632
+        },
+        {
+          "step": 7,
+          "value": 0.5610952973365784
+        },
+        {
+          "step": 8,
+          "value": 0.5650827884674072
+        },
+        {
+          "step": 9,
+          "value": 0.56167072057724
+        },
+        {
+          "step": 10,
+          "value": 0.5672687292098999
+        },
+        {
+          "step": 11,
+          "value": 0.5670229196548462
+        },
+        {
+          "step": 12,
+          "value": 0.5689012408256531
+        },
+        {
+          "step": 13,
+          "value": 0.5706236362457275
+        },
+        {
+          "step": 14,
+          "value": 0.5677124261856079
+        },
+        {
+          "step": 15,
+          "value": 0.5758073925971985
+        },
+        {
+          "step": 16,
+          "value": 0.5721142888069153
+        },
+        {
+          "step": 17,
+          "value": 0.5725254416465759
+        },
+        {
+          "step": 18,
+          "value": 0.5781412720680237
+        },
+        {
+          "step": 19,
+          "value": 0.5717446208000183
+        },
+        {
+          "step": 20,
+          "value": 0.5747092962265015
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.2760595381259918,
+        "step": 16
+      },
+      "best_pixel_val": {
+        "value": 0.5781412720680237,
+        "step": 18
+      },
+      "lowest_loss_val": {
+        "value": 1.6428749561309814,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.27561938762664795,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.5747092962265015,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.6428749561309814,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.3095453083515167,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.5851427316665649,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 1.603447437286377,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 2,
+    "image": "finalresults/pics/llava_val_vis_layer2.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 2.3772568702697754
+        },
+        {
+          "step": 2,
+          "value": 2.002281665802002
+        },
+        {
+          "step": 3,
+          "value": 1.900123953819275
+        },
+        {
+          "step": 4,
+          "value": 1.832663655281067
+        },
+        {
+          "step": 5,
+          "value": 1.787351131439209
+        },
+        {
+          "step": 6,
+          "value": 1.7504960298538208
+        },
+        {
+          "step": 7,
+          "value": 1.721775770187378
+        },
+        {
+          "step": 8,
+          "value": 1.7001736164093018
+        },
+        {
+          "step": 9,
+          "value": 1.6796875
+        },
+        {
+          "step": 10,
+          "value": 1.6651041507720947
+        },
+        {
+          "step": 11,
+          "value": 1.647519826889038
+        },
+        {
+          "step": 12,
+          "value": 1.637599229812622
+        },
+        {
+          "step": 13,
+          "value": 1.623809576034546
+        },
+        {
+          "step": 14,
+          "value": 1.6153521537780762
+        },
+        {
+          "step": 15,
+          "value": 1.6073660850524902
+        },
+        {
+          "step": 16,
+          "value": 1.5992311239242554
+        },
+        {
+          "step": 17,
+          "value": 1.5945684909820557
+        },
+        {
+          "step": 18,
+          "value": 1.5874007940292358
+        },
+        {
+          "step": 19,
+          "value": 1.579836368560791
+        },
+        {
+          "step": 20,
+          "value": 1.5755952596664429
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 2.0848751068115234
+        },
+        {
+          "step": 2,
+          "value": 1.9611250162124634
+        },
+        {
+          "step": 3,
+          "value": 1.8713749647140503
+        },
+        {
+          "step": 4,
+          "value": 1.845312476158142
+        },
+        {
+          "step": 5,
+          "value": 1.8035000562667847
+        },
+        {
+          "step": 6,
+          "value": 1.762374997138977
+        },
+        {
+          "step": 7,
+          "value": 1.7471250295639038
+        },
+        {
+          "step": 8,
+          "value": 1.723812460899353
+        },
+        {
+          "step": 9,
+          "value": 1.7129374742507935
+        },
+        {
+          "step": 10,
+          "value": 1.7211250066757202
+        },
+        {
+          "step": 11,
+          "value": 1.6869374513626099
+        },
+        {
+          "step": 12,
+          "value": 1.6790624856948853
+        },
+        {
+          "step": 13,
+          "value": 1.6564375162124634
+        },
+        {
+          "step": 14,
+          "value": 1.6554374694824219
+        },
+        {
+          "step": 15,
+          "value": 1.6391874551773071
+        },
+        {
+          "step": 16,
+          "value": 1.6451250314712524
+        },
+        {
+          "step": 17,
+          "value": 1.650937557220459
+        },
+        {
+          "step": 18,
+          "value": 1.6338125467300415
+        },
+        {
+          "step": 19,
+          "value": 1.6295000314712524
+        },
+        {
+          "step": 20,
+          "value": 1.6248749494552612
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.21980954706668854
+        },
+        {
+          "step": 2,
+          "value": 0.24434703588485718
+        },
+        {
+          "step": 3,
+          "value": 0.26194465160369873
+        },
+        {
+          "step": 4,
+          "value": 0.2632583677768707
+        },
+        {
+          "step": 5,
+          "value": 0.2762098014354706
+        },
+        {
+          "step": 6,
+          "value": 0.2766874134540558
+        },
+        {
+          "step": 7,
+          "value": 0.2865566313266754
+        },
+        {
+          "step": 8,
+          "value": 0.2843434810638428
+        },
+        {
+          "step": 9,
+          "value": 0.2889930009841919
+        },
+        {
+          "step": 10,
+          "value": 0.29493963718414307
+        },
+        {
+          "step": 11,
+          "value": 0.29913032054901123
+        },
+        {
+          "step": 12,
+          "value": 0.3004845976829529
+        },
+        {
+          "step": 13,
+          "value": 0.3058832585811615
+        },
+        {
+          "step": 14,
+          "value": 0.30414751172065735
+        },
+        {
+          "step": 15,
+          "value": 0.3073652684688568
+        },
+        {
+          "step": 16,
+          "value": 0.3057889938354492
+        },
+        {
+          "step": 17,
+          "value": 0.3080955147743225
+        },
+        {
+          "step": 18,
+          "value": 0.31096625328063965
+        },
+        {
+          "step": 19,
+          "value": 0.30980801582336426
+        },
+        {
+          "step": 20,
+          "value": 0.3120408058166504
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.21201229095458984
+        },
+        {
+          "step": 2,
+          "value": 0.2339896261692047
+        },
+        {
+          "step": 3,
+          "value": 0.24529510736465454
+        },
+        {
+          "step": 4,
+          "value": 0.24644969403743744
+        },
+        {
+          "step": 5,
+          "value": 0.2560974955558777
+        },
+        {
+          "step": 6,
+          "value": 0.25497421622276306
+        },
+        {
+          "step": 7,
+          "value": 0.26098841428756714
+        },
+        {
+          "step": 8,
+          "value": 0.25872692465782166
+        },
+        {
+          "step": 9,
+          "value": 0.262295126914978
+        },
+        {
+          "step": 10,
+          "value": 0.2678866982460022
+        },
+        {
+          "step": 11,
+          "value": 0.270536869764328
+        },
+        {
+          "step": 12,
+          "value": 0.2703489363193512
+        },
+        {
+          "step": 13,
+          "value": 0.27462607622146606
+        },
+        {
+          "step": 14,
+          "value": 0.27302247285842896
+        },
+        {
+          "step": 15,
+          "value": 0.27330857515335083
+        },
+        {
+          "step": 16,
+          "value": 0.2739914059638977
+        },
+        {
+          "step": 17,
+          "value": 0.27322492003440857
+        },
+        {
+          "step": 18,
+          "value": 0.2771003842353821
+        },
+        {
+          "step": 19,
+          "value": 0.2769660949707031
+        },
+        {
+          "step": 20,
+          "value": 0.27653154730796814
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.5175273418426514
+        },
+        {
+          "step": 2,
+          "value": 0.5404065847396851
+        },
+        {
+          "step": 3,
+          "value": 0.5551958680152893
+        },
+        {
+          "step": 4,
+          "value": 0.5611788034439087
+        },
+        {
+          "step": 5,
+          "value": 0.566985547542572
+        },
+        {
+          "step": 6,
+          "value": 0.5709477663040161
+        },
+        {
+          "step": 7,
+          "value": 0.574576199054718
+        },
+        {
+          "step": 8,
+          "value": 0.5710758566856384
+        },
+        {
+          "step": 9,
+          "value": 0.5800788998603821
+        },
+        {
+          "step": 10,
+          "value": 0.570764422416687
+        },
+        {
+          "step": 11,
+          "value": 0.5820670127868652
+        },
+        {
+          "step": 12,
+          "value": 0.5849349498748779
+        },
+        {
+          "step": 13,
+          "value": 0.5909781455993652
+        },
+        {
+          "step": 14,
+          "value": 0.5862216353416443
+        },
+        {
+          "step": 15,
+          "value": 0.5910542607307434
+        },
+        {
+          "step": 16,
+          "value": 0.5909015536308289
+        },
+        {
+          "step": 17,
+          "value": 0.5957180261611938
+        },
+        {
+          "step": 18,
+          "value": 0.5983449220657349
+        },
+        {
+          "step": 19,
+          "value": 0.5949450731277466
+        },
+        {
+          "step": 20,
+          "value": 0.5952666997909546
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.5128005743026733
+        },
+        {
+          "step": 2,
+          "value": 0.534496009349823
+        },
+        {
+          "step": 3,
+          "value": 0.5499022603034973
+        },
+        {
+          "step": 4,
+          "value": 0.5542703866958618
+        },
+        {
+          "step": 5,
+          "value": 0.5598485469818115
+        },
+        {
+          "step": 6,
+          "value": 0.5635673403739929
+        },
+        {
+          "step": 7,
+          "value": 0.5665721297264099
+        },
+        {
+          "step": 8,
+          "value": 0.5631293654441833
+        },
+        {
+          "step": 9,
+          "value": 0.5707451105117798
+        },
+        {
+          "step": 10,
+          "value": 0.5607852339744568
+        },
+        {
+          "step": 11,
+          "value": 0.5723636150360107
+        },
+        {
+          "step": 12,
+          "value": 0.5751150846481323
+        },
+        {
+          "step": 13,
+          "value": 0.5813233256340027
+        },
+        {
+          "step": 14,
+          "value": 0.5768436789512634
+        },
+        {
+          "step": 15,
+          "value": 0.5812236666679382
+        },
+        {
+          "step": 16,
+          "value": 0.5817522406578064
+        },
+        {
+          "step": 17,
+          "value": 0.5845617055892944
+        },
+        {
+          "step": 18,
+          "value": 0.589099109172821
+        },
+        {
+          "step": 19,
+          "value": 0.5848091840744019
+        },
+        {
+          "step": 20,
+          "value": 0.5849375128746033
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.2771003842353821,
+        "step": 18
+      },
+      "best_pixel_val": {
+        "value": 0.589099109172821,
+        "step": 18
+      },
+      "lowest_loss_val": {
+        "value": 1.6248749494552612,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.27653154730796814,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.5849375128746033,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.6248749494552612,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.3120408058166504,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.5952666997909546,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 1.5755952596664429,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 4,
+    "image": "finalresults/pics/llava_val_vis_layer4.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 2.296527862548828
+        },
+        {
+          "step": 2,
+          "value": 1.8573412895202637
+        },
+        {
+          "step": 3,
+          "value": 1.7269593477249146
+        },
+        {
+          "step": 4,
+          "value": 1.641964316368103
+        },
+        {
+          "step": 5,
+          "value": 1.5869791507720947
+        },
+        {
+          "step": 6,
+          "value": 1.543105125427246
+        },
+        {
+          "step": 7,
+          "value": 1.5069692134857178
+        },
+        {
+          "step": 8,
+          "value": 1.4768601655960083
+        },
+        {
+          "step": 9,
+          "value": 1.4573661088943481
+        },
+        {
+          "step": 10,
+          "value": 1.4353175163269043
+        },
+        {
+          "step": 11,
+          "value": 1.422247052192688
+        },
+        {
+          "step": 12,
+          "value": 1.410019874572754
+        },
+        {
+          "step": 13,
+          "value": 1.3933780193328857
+        },
+        {
+          "step": 14,
+          "value": 1.384920597076416
+        },
+        {
+          "step": 15,
+          "value": 1.373809576034546
+        },
+        {
+          "step": 16,
+          "value": 1.3620039224624634
+        },
+        {
+          "step": 17,
+          "value": 1.3589037656784058
+        },
+        {
+          "step": 18,
+          "value": 1.3515872955322266
+        },
+        {
+          "step": 19,
+          "value": 1.3435019254684448
+        },
+        {
+          "step": 20,
+          "value": 1.3423115015029907
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.9676874876022339
+        },
+        {
+          "step": 2,
+          "value": 1.807437539100647
+        },
+        {
+          "step": 3,
+          "value": 1.7031874656677246
+        },
+        {
+          "step": 4,
+          "value": 1.6358749866485596
+        },
+        {
+          "step": 5,
+          "value": 1.5831249952316284
+        },
+        {
+          "step": 6,
+          "value": 1.557187557220459
+        },
+        {
+          "step": 7,
+          "value": 1.527437448501587
+        },
+        {
+          "step": 8,
+          "value": 1.5049375295639038
+        },
+        {
+          "step": 9,
+          "value": 1.4898124933242798
+        },
+        {
+          "step": 10,
+          "value": 1.465999960899353
+        },
+        {
+          "step": 11,
+          "value": 1.4736875295639038
+        },
+        {
+          "step": 12,
+          "value": 1.447812557220459
+        },
+        {
+          "step": 13,
+          "value": 1.4398750066757202
+        },
+        {
+          "step": 14,
+          "value": 1.4224375486373901
+        },
+        {
+          "step": 15,
+          "value": 1.4123125076293945
+        },
+        {
+          "step": 16,
+          "value": 1.4070625305175781
+        },
+        {
+          "step": 17,
+          "value": 1.3964375257492065
+        },
+        {
+          "step": 18,
+          "value": 1.3961875438690186
+        },
+        {
+          "step": 19,
+          "value": 1.389875054359436
+        },
+        {
+          "step": 20,
+          "value": 1.3920625448226929
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.22214291989803314
+        },
+        {
+          "step": 2,
+          "value": 0.2514801621437073
+        },
+        {
+          "step": 3,
+          "value": 0.2640893757343292
+        },
+        {
+          "step": 4,
+          "value": 0.2765255868434906
+        },
+        {
+          "step": 5,
+          "value": 0.28653159737586975
+        },
+        {
+          "step": 6,
+          "value": 0.29641133546829224
+        },
+        {
+          "step": 7,
+          "value": 0.30363190174102783
+        },
+        {
+          "step": 8,
+          "value": 0.3055912256240845
+        },
+        {
+          "step": 9,
+          "value": 0.3059004843235016
+        },
+        {
+          "step": 10,
+          "value": 0.3098200559616089
+        },
+        {
+          "step": 11,
+          "value": 0.3133186995983124
+        },
+        {
+          "step": 12,
+          "value": 0.3176637291908264
+        },
+        {
+          "step": 13,
+          "value": 0.3169816732406616
+        },
+        {
+          "step": 14,
+          "value": 0.317834734916687
+        },
+        {
+          "step": 15,
+          "value": 0.3237547278404236
+        },
+        {
+          "step": 16,
+          "value": 0.3228437304496765
+        },
+        {
+          "step": 17,
+          "value": 0.32335811853408813
+        },
+        {
+          "step": 18,
+          "value": 0.3273073434829712
+        },
+        {
+          "step": 19,
+          "value": 0.32883545756340027
+        },
+        {
+          "step": 20,
+          "value": 0.3273020088672638
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.21738068759441376
+        },
+        {
+          "step": 2,
+          "value": 0.23845574259757996
+        },
+        {
+          "step": 3,
+          "value": 0.24824807047843933
+        },
+        {
+          "step": 4,
+          "value": 0.2584959864616394
+        },
+        {
+          "step": 5,
+          "value": 0.2646665871143341
+        },
+        {
+          "step": 6,
+          "value": 0.2723912000656128
+        },
+        {
+          "step": 7,
+          "value": 0.2791413366794586
+        },
+        {
+          "step": 8,
+          "value": 0.2802933156490326
+        },
+        {
+          "step": 9,
+          "value": 0.2778591513633728
+        },
+        {
+          "step": 10,
+          "value": 0.278866171836853
+        },
+        {
+          "step": 11,
+          "value": 0.2827688753604889
+        },
+        {
+          "step": 12,
+          "value": 0.2868055999279022
+        },
+        {
+          "step": 13,
+          "value": 0.28418707847595215
+        },
+        {
+          "step": 14,
+          "value": 0.28456318378448486
+        },
+        {
+          "step": 15,
+          "value": 0.2900773584842682
+        },
+        {
+          "step": 16,
+          "value": 0.28687670826911926
+        },
+        {
+          "step": 17,
+          "value": 0.2872343063354492
+        },
+        {
+          "step": 18,
+          "value": 0.28891316056251526
+        },
+        {
+          "step": 19,
+          "value": 0.2927180528640747
+        },
+        {
+          "step": 20,
+          "value": 0.290577232837677
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.5461145639419556
+        },
+        {
+          "step": 2,
+          "value": 0.576378345489502
+        },
+        {
+          "step": 3,
+          "value": 0.5850189328193665
+        },
+        {
+          "step": 4,
+          "value": 0.6043476462364197
+        },
+        {
+          "step": 5,
+          "value": 0.6193637251853943
+        },
+        {
+          "step": 6,
+          "value": 0.6217460036277771
+        },
+        {
+          "step": 7,
+          "value": 0.6228539347648621
+        },
+        {
+          "step": 8,
+          "value": 0.6368089914321899
+        },
+        {
+          "step": 9,
+          "value": 0.6323820948600769
+        },
+        {
+          "step": 10,
+          "value": 0.6369821429252625
+        },
+        {
+          "step": 11,
+          "value": 0.6319908499717712
+        },
+        {
+          "step": 12,
+          "value": 0.6405737996101379
+        },
+        {
+          "step": 13,
+          "value": 0.6417177319526672
+        },
+        {
+          "step": 14,
+          "value": 0.6376832127571106
+        },
+        {
+          "step": 15,
+          "value": 0.6386038064956665
+        },
+        {
+          "step": 16,
+          "value": 0.6477389335632324
+        },
+        {
+          "step": 17,
+          "value": 0.6496782302856445
+        },
+        {
+          "step": 18,
+          "value": 0.6477439999580383
+        },
+        {
+          "step": 19,
+          "value": 0.6529310941696167
+        },
+        {
+          "step": 20,
+          "value": 0.6514337062835693
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.5434467196464539
+        },
+        {
+          "step": 2,
+          "value": 0.5716592073440552
+        },
+        {
+          "step": 3,
+          "value": 0.5788352489471436
+        },
+        {
+          "step": 4,
+          "value": 0.5977969765663147
+        },
+        {
+          "step": 5,
+          "value": 0.6125573515892029
+        },
+        {
+          "step": 6,
+          "value": 0.6151154637336731
+        },
+        {
+          "step": 7,
+          "value": 0.6151453852653503
+        },
+        {
+          "step": 8,
+          "value": 0.6304318904876709
+        },
+        {
+          "step": 9,
+          "value": 0.6248467564582825
+        },
+        {
+          "step": 10,
+          "value": 0.6290497183799744
+        },
+        {
+          "step": 11,
+          "value": 0.6231411695480347
+        },
+        {
+          "step": 12,
+          "value": 0.6340115666389465
+        },
+        {
+          "step": 13,
+          "value": 0.6315601468086243
+        },
+        {
+          "step": 14,
+          "value": 0.6299530267715454
+        },
+        {
+          "step": 15,
+          "value": 0.6303257346153259
+        },
+        {
+          "step": 16,
+          "value": 0.6387398838996887
+        },
+        {
+          "step": 17,
+          "value": 0.641196608543396
+        },
+        {
+          "step": 18,
+          "value": 0.638230562210083
+        },
+        {
+          "step": 19,
+          "value": 0.6453883647918701
+        },
+        {
+          "step": 20,
+          "value": 0.6422991156578064
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.2927180528640747,
+        "step": 19
+      },
+      "best_pixel_val": {
+        "value": 0.6453883647918701,
+        "step": 19
+      },
+      "lowest_loss_val": {
+        "value": 1.389875054359436,
+        "step": 19
+      },
+      "final_mIoU_val": {
+        "value": 0.290577232837677,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.6422991156578064,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.3920625448226929,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.3273020088672638,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.6514337062835693,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 1.3423115015029907,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 8,
+    "image": "finalresults/pics/llava_val_vis_layer8.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 2.059821367263794
+        },
+        {
+          "step": 2,
+          "value": 1.5696181058883667
+        },
+        {
+          "step": 3,
+          "value": 1.4380704164505005
+        },
+        {
+          "step": 4,
+          "value": 1.3634424209594727
+        },
+        {
+          "step": 5,
+          "value": 1.3109127283096313
+        },
+        {
+          "step": 6,
+          "value": 1.2742559909820557
+        },
+        {
+          "step": 7,
+          "value": 1.2465277910232544
+        },
+        {
+          "step": 8,
+          "value": 1.224454402923584
+        },
+        {
+          "step": 9,
+          "value": 1.2081844806671143
+        },
+        {
+          "step": 10,
+          "value": 1.1923115253448486
+        },
+        {
+          "step": 11,
+          "value": 1.1805803775787354
+        },
+        {
+          "step": 12,
+          "value": 1.1709697246551514
+        },
+        {
+          "step": 13,
+          "value": 1.1580109596252441
+        },
+        {
+          "step": 14,
+          "value": 1.1511905193328857
+        },
+        {
+          "step": 15,
+          "value": 1.1451388597488403
+        },
+        {
+          "step": 16,
+          "value": 1.1388392448425293
+        },
+        {
+          "step": 17,
+          "value": 1.1324900388717651
+        },
+        {
+          "step": 18,
+          "value": 1.125793695449829
+        },
+        {
+          "step": 19,
+          "value": 1.123437523841858
+        },
+        {
+          "step": 20,
+          "value": 1.120039701461792
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.6806875467300415
+        },
+        {
+          "step": 2,
+          "value": 1.5029375553131104
+        },
+        {
+          "step": 3,
+          "value": 1.4257500171661377
+        },
+        {
+          "step": 4,
+          "value": 1.360687494277954
+        },
+        {
+          "step": 5,
+          "value": 1.3320624828338623
+        },
+        {
+          "step": 6,
+          "value": 1.3050625324249268
+        },
+        {
+          "step": 7,
+          "value": 1.2713749408721924
+        },
+        {
+          "step": 8,
+          "value": 1.2512500286102295
+        },
+        {
+          "step": 9,
+          "value": 1.234375
+        },
+        {
+          "step": 10,
+          "value": 1.2231249809265137
+        },
+        {
+          "step": 11,
+          "value": 1.218250036239624
+        },
+        {
+          "step": 12,
+          "value": 1.214937448501587
+        },
+        {
+          "step": 13,
+          "value": 1.205875039100647
+        },
+        {
+          "step": 14,
+          "value": 1.1926250457763672
+        },
+        {
+          "step": 15,
+          "value": 1.190000057220459
+        },
+        {
+          "step": 16,
+          "value": 1.182187557220459
+        },
+        {
+          "step": 17,
+          "value": 1.1743124723434448
+        },
+        {
+          "step": 18,
+          "value": 1.1828124523162842
+        },
+        {
+          "step": 19,
+          "value": 1.1717499494552612
+        },
+        {
+          "step": 20,
+          "value": 1.1668750047683716
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.2308349907398224
+        },
+        {
+          "step": 2,
+          "value": 0.2677004635334015
+        },
+        {
+          "step": 3,
+          "value": 0.2843898832798004
+        },
+        {
+          "step": 4,
+          "value": 0.30397453904151917
+        },
+        {
+          "step": 5,
+          "value": 0.3098222315311432
+        },
+        {
+          "step": 6,
+          "value": 0.31669941544532776
+        },
+        {
+          "step": 7,
+          "value": 0.3245408236980438
+        },
+        {
+          "step": 8,
+          "value": 0.33276093006134033
+        },
+        {
+          "step": 9,
+          "value": 0.3385370969772339
+        },
+        {
+          "step": 10,
+          "value": 0.3409878611564636
+        },
+        {
+          "step": 11,
+          "value": 0.3401964008808136
+        },
+        {
+          "step": 12,
+          "value": 0.3460511863231659
+        },
+        {
+          "step": 13,
+          "value": 0.3449050188064575
+        },
+        {
+          "step": 14,
+          "value": 0.349317729473114
+        },
+        {
+          "step": 15,
+          "value": 0.34936249256134033
+        },
+        {
+          "step": 16,
+          "value": 0.35431969165802
+        },
+        {
+          "step": 17,
+          "value": 0.3533957004547119
+        },
+        {
+          "step": 18,
+          "value": 0.357040673494339
+        },
+        {
+          "step": 19,
+          "value": 0.3604046106338501
+        },
+        {
+          "step": 20,
+          "value": 0.3557013273239136
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.22317062318325043
+        },
+        {
+          "step": 2,
+          "value": 0.2514815628528595
+        },
+        {
+          "step": 3,
+          "value": 0.26481685042381287
+        },
+        {
+          "step": 4,
+          "value": 0.27878937125205994
+        },
+        {
+          "step": 5,
+          "value": 0.2837633490562439
+        },
+        {
+          "step": 6,
+          "value": 0.29037198424339294
+        },
+        {
+          "step": 7,
+          "value": 0.2957053780555725
+        },
+        {
+          "step": 8,
+          "value": 0.3021904528141022
+        },
+        {
+          "step": 9,
+          "value": 0.304671049118042
+        },
+        {
+          "step": 10,
+          "value": 0.30393853783607483
+        },
+        {
+          "step": 11,
+          "value": 0.30399855971336365
+        },
+        {
+          "step": 12,
+          "value": 0.3075396716594696
+        },
+        {
+          "step": 13,
+          "value": 0.30603745579719543
+        },
+        {
+          "step": 14,
+          "value": 0.3113487958908081
+        },
+        {
+          "step": 15,
+          "value": 0.31008708477020264
+        },
+        {
+          "step": 16,
+          "value": 0.31111279129981995
+        },
+        {
+          "step": 17,
+          "value": 0.3136567175388336
+        },
+        {
+          "step": 18,
+          "value": 0.3119991719722748
+        },
+        {
+          "step": 19,
+          "value": 0.3146602511405945
+        },
+        {
+          "step": 20,
+          "value": 0.31310543417930603
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.5988823175430298
+        },
+        {
+          "step": 2,
+          "value": 0.6324013471603394
+        },
+        {
+          "step": 3,
+          "value": 0.6414505839347839
+        },
+        {
+          "step": 4,
+          "value": 0.6544345021247864
+        },
+        {
+          "step": 5,
+          "value": 0.6564703583717346
+        },
+        {
+          "step": 6,
+          "value": 0.6667157411575317
+        },
+        {
+          "step": 7,
+          "value": 0.6690137386322021
+        },
+        {
+          "step": 8,
+          "value": 0.6773534417152405
+        },
+        {
+          "step": 9,
+          "value": 0.6782392859458923
+        },
+        {
+          "step": 10,
+          "value": 0.6794693470001221
+        },
+        {
+          "step": 11,
+          "value": 0.6808050274848938
+        },
+        {
+          "step": 12,
+          "value": 0.6817753314971924
+        },
+        {
+          "step": 13,
+          "value": 0.6818485856056213
+        },
+        {
+          "step": 14,
+          "value": 0.6869156956672668
+        },
+        {
+          "step": 15,
+          "value": 0.6871801018714905
+        },
+        {
+          "step": 16,
+          "value": 0.6895290017127991
+        },
+        {
+          "step": 17,
+          "value": 0.6890280842781067
+        },
+        {
+          "step": 18,
+          "value": 0.6878388524055481
+        },
+        {
+          "step": 19,
+          "value": 0.6908169388771057
+        },
+        {
+          "step": 20,
+          "value": 0.6905074119567871
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.5964199304580688
+        },
+        {
+          "step": 2,
+          "value": 0.6281840801239014
+        },
+        {
+          "step": 3,
+          "value": 0.6377204060554504
+        },
+        {
+          "step": 4,
+          "value": 0.6490472555160522
+        },
+        {
+          "step": 5,
+          "value": 0.6501885652542114
+        },
+        {
+          "step": 6,
+          "value": 0.6603777408599854
+        },
+        {
+          "step": 7,
+          "value": 0.6635845303535461
+        },
+        {
+          "step": 8,
+          "value": 0.6700462102890015
+        },
+        {
+          "step": 9,
+          "value": 0.6696560382843018
+        },
+        {
+          "step": 10,
+          "value": 0.6719329953193665
+        },
+        {
+          "step": 11,
+          "value": 0.6728346943855286
+        },
+        {
+          "step": 12,
+          "value": 0.6710062623023987
+        },
+        {
+          "step": 13,
+          "value": 0.6730683445930481
+        },
+        {
+          "step": 14,
+          "value": 0.6782112717628479
+        },
+        {
+          "step": 15,
+          "value": 0.679872989654541
+        },
+        {
+          "step": 16,
+          "value": 0.6794869303703308
+        },
+        {
+          "step": 17,
+          "value": 0.6805223226547241
+        },
+        {
+          "step": 18,
+          "value": 0.6780940294265747
+        },
+        {
+          "step": 19,
+          "value": 0.6809519529342651
+        },
+        {
+          "step": 20,
+          "value": 0.6814853549003601
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.3146602511405945,
+        "step": 19
+      },
+      "best_pixel_val": {
+        "value": 0.6814853549003601,
+        "step": 20
+      },
+      "lowest_loss_val": {
+        "value": 1.1668750047683716,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.31310543417930603,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.6814853549003601,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.1668750047683716,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.3557013273239136,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.6905074119567871,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 1.120039701461792,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 12,
+    "image": "finalresults/pics/llava_val_vis_layer12.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.8573660850524902
+        },
+        {
+          "step": 2,
+          "value": 1.3815475702285767
+        },
+        {
+          "step": 3,
+          "value": 1.2674355506896973
+        },
+        {
+          "step": 4,
+          "value": 1.2012152671813965
+        },
+        {
+          "step": 5,
+          "value": 1.1606398820877075
+        },
+        {
+          "step": 6,
+          "value": 1.127256989479065
+        },
+        {
+          "step": 7,
+          "value": 1.1086061000823975
+        },
+        {
+          "step": 8,
+          "value": 1.0896081924438477
+        },
+        {
+          "step": 9,
+          "value": 1.0751488208770752
+        },
+        {
+          "step": 10,
+          "value": 1.0628844499588013
+        },
+        {
+          "step": 11,
+          "value": 1.052976131439209
+        },
+        {
+          "step": 12,
+          "value": 1.0445188283920288
+        },
+        {
+          "step": 13,
+          "value": 1.0366815328598022
+        },
+        {
+          "step": 14,
+          "value": 1.0284721851348877
+        },
+        {
+          "step": 15,
+          "value": 1.023350715637207
+        },
+        {
+          "step": 16,
+          "value": 1.0171626806259155
+        },
+        {
+          "step": 17,
+          "value": 1.0134549140930176
+        },
+        {
+          "step": 18,
+          "value": 1.0083085298538208
+        },
+        {
+          "step": 19,
+          "value": 1.006386399269104
+        },
+        {
+          "step": 20,
+          "value": 1.0012773275375366
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.4774374961853027
+        },
+        {
+          "step": 2,
+          "value": 1.3224999904632568
+        },
+        {
+          "step": 3,
+          "value": 1.2619999647140503
+        },
+        {
+          "step": 4,
+          "value": 1.20131254196167
+        },
+        {
+          "step": 5,
+          "value": 1.18149995803833
+        },
+        {
+          "step": 6,
+          "value": 1.1531250476837158
+        },
+        {
+          "step": 7,
+          "value": 1.1395000219345093
+        },
+        {
+          "step": 8,
+          "value": 1.1213124990463257
+        },
+        {
+          "step": 9,
+          "value": 1.1154375076293945
+        },
+        {
+          "step": 10,
+          "value": 1.1012500524520874
+        },
+        {
+          "step": 11,
+          "value": 1.1001875400543213
+        },
+        {
+          "step": 12,
+          "value": 1.0898125171661377
+        },
+        {
+          "step": 13,
+          "value": 1.0856250524520874
+        },
+        {
+          "step": 14,
+          "value": 1.0848125219345093
+        },
+        {
+          "step": 15,
+          "value": 1.072812557220459
+        },
+        {
+          "step": 16,
+          "value": 1.0626250505447388
+        },
+        {
+          "step": 17,
+          "value": 1.0613750219345093
+        },
+        {
+          "step": 18,
+          "value": 1.0654375553131104
+        },
+        {
+          "step": 19,
+          "value": 1.0625
+        },
+        {
+          "step": 20,
+          "value": 1.0533125400543213
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.25124770402908325
+        },
+        {
+          "step": 2,
+          "value": 0.2887915074825287
+        },
+        {
+          "step": 3,
+          "value": 0.30516791343688965
+        },
+        {
+          "step": 4,
+          "value": 0.324240118265152
+        },
+        {
+          "step": 5,
+          "value": 0.3319823443889618
+        },
+        {
+          "step": 6,
+          "value": 0.3382493853569031
+        },
+        {
+          "step": 7,
+          "value": 0.3480403423309326
+        },
+        {
+          "step": 8,
+          "value": 0.3507179915904999
+        },
+        {
+          "step": 9,
+          "value": 0.3595862090587616
+        },
+        {
+          "step": 10,
+          "value": 0.3613915741443634
+        },
+        {
+          "step": 11,
+          "value": 0.367098867893219
+        },
+        {
+          "step": 12,
+          "value": 0.3646318018436432
+        },
+        {
+          "step": 13,
+          "value": 0.373193621635437
+        },
+        {
+          "step": 14,
+          "value": 0.37085676193237305
+        },
+        {
+          "step": 15,
+          "value": 0.37502995133399963
+        },
+        {
+          "step": 16,
+          "value": 0.3789423406124115
+        },
+        {
+          "step": 17,
+          "value": 0.38033241033554077
+        },
+        {
+          "step": 18,
+          "value": 0.3806101679801941
+        },
+        {
+          "step": 19,
+          "value": 0.38322246074676514
+        },
+        {
+          "step": 20,
+          "value": 0.3831257224082947
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.24136358499526978
+        },
+        {
+          "step": 2,
+          "value": 0.27586671710014343
+        },
+        {
+          "step": 3,
+          "value": 0.28598320484161377
+        },
+        {
+          "step": 4,
+          "value": 0.3000603914260864
+        },
+        {
+          "step": 5,
+          "value": 0.30192363262176514
+        },
+        {
+          "step": 6,
+          "value": 0.3079892694950104
+        },
+        {
+          "step": 7,
+          "value": 0.3117082118988037
+        },
+        {
+          "step": 8,
+          "value": 0.3139602243900299
+        },
+        {
+          "step": 9,
+          "value": 0.31804338097572327
+        },
+        {
+          "step": 10,
+          "value": 0.32137930393218994
+        },
+        {
+          "step": 11,
+          "value": 0.32135674357414246
+        },
+        {
+          "step": 12,
+          "value": 0.3205559253692627
+        },
+        {
+          "step": 13,
+          "value": 0.3237128257751465
+        },
+        {
+          "step": 14,
+          "value": 0.32273104786872864
+        },
+        {
+          "step": 15,
+          "value": 0.323715478181839
+        },
+        {
+          "step": 16,
+          "value": 0.3278282880783081
+        },
+        {
+          "step": 17,
+          "value": 0.32998743653297424
+        },
+        {
+          "step": 18,
+          "value": 0.32924824953079224
+        },
+        {
+          "step": 19,
+          "value": 0.328054815530777
+        },
+        {
+          "step": 20,
+          "value": 0.3313457667827606
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.6361548900604248
+        },
+        {
+          "step": 2,
+          "value": 0.6628767251968384
+        },
+        {
+          "step": 3,
+          "value": 0.6731046438217163
+        },
+        {
+          "step": 4,
+          "value": 0.6826692819595337
+        },
+        {
+          "step": 5,
+          "value": 0.687185525894165
+        },
+        {
+          "step": 6,
+          "value": 0.692054808139801
+        },
+        {
+          "step": 7,
+          "value": 0.6963040232658386
+        },
+        {
+          "step": 8,
+          "value": 0.6974008083343506
+        },
+        {
+          "step": 9,
+          "value": 0.7023782134056091
+        },
+        {
+          "step": 10,
+          "value": 0.7042053937911987
+        },
+        {
+          "step": 11,
+          "value": 0.7040095925331116
+        },
+        {
+          "step": 12,
+          "value": 0.7044422030448914
+        },
+        {
+          "step": 13,
+          "value": 0.7083072662353516
+        },
+        {
+          "step": 14,
+          "value": 0.7048061490058899
+        },
+        {
+          "step": 15,
+          "value": 0.7105259299278259
+        },
+        {
+          "step": 16,
+          "value": 0.7124906182289124
+        },
+        {
+          "step": 17,
+          "value": 0.710869312286377
+        },
+        {
+          "step": 18,
+          "value": 0.7117918729782104
+        },
+        {
+          "step": 19,
+          "value": 0.7117053270339966
+        },
+        {
+          "step": 20,
+          "value": 0.7141069769859314
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.6343607306480408
+        },
+        {
+          "step": 2,
+          "value": 0.6603257656097412
+        },
+        {
+          "step": 3,
+          "value": 0.6673082709312439
+        },
+        {
+          "step": 4,
+          "value": 0.677585244178772
+        },
+        {
+          "step": 5,
+          "value": 0.6798602938652039
+        },
+        {
+          "step": 6,
+          "value": 0.6851592659950256
+        },
+        {
+          "step": 7,
+          "value": 0.6881836652755737
+        },
+        {
+          "step": 8,
+          "value": 0.6898828148841858
+        },
+        {
+          "step": 9,
+          "value": 0.6928498148918152
+        },
+        {
+          "step": 10,
+          "value": 0.6945376992225647
+        },
+        {
+          "step": 11,
+          "value": 0.6938343048095703
+        },
+        {
+          "step": 12,
+          "value": 0.6956326961517334
+        },
+        {
+          "step": 13,
+          "value": 0.6976957321166992
+        },
+        {
+          "step": 14,
+          "value": 0.6947588920593262
+        },
+        {
+          "step": 15,
+          "value": 0.6999365091323853
+        },
+        {
+          "step": 16,
+          "value": 0.7012664675712585
+        },
+        {
+          "step": 17,
+          "value": 0.7002707719802856
+        },
+        {
+          "step": 18,
+          "value": 0.6992009878158569
+        },
+        {
+          "step": 19,
+          "value": 0.6996790170669556
+        },
+        {
+          "step": 20,
+          "value": 0.7021011710166931
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.3313457667827606,
+        "step": 20
+      },
+      "best_pixel_val": {
+        "value": 0.7021011710166931,
+        "step": 20
+      },
+      "lowest_loss_val": {
+        "value": 1.0533125400543213,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.3313457667827606,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.7021011710166931,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.0533125400543213,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.3831257224082947,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7141069769859314,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 1.0012773275375366,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 16,
+    "image": "finalresults/pics/llava_val_vis_layer16.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.7575644254684448
+        },
+        {
+          "step": 2,
+          "value": 1.2971726655960083
+        },
+        {
+          "step": 3,
+          "value": 1.1933035850524902
+        },
+        {
+          "step": 4,
+          "value": 1.1369792222976685
+        },
+        {
+          "step": 5,
+          "value": 1.0993924140930176
+        },
+        {
+          "step": 6,
+          "value": 1.0730903148651123
+        },
+        {
+          "step": 7,
+          "value": 1.0538442134857178
+        },
+        {
+          "step": 8,
+          "value": 1.0348585844039917
+        },
+        {
+          "step": 9,
+          "value": 1.0220361948013306
+        },
+        {
+          "step": 10,
+          "value": 1.0105159282684326
+        },
+        {
+          "step": 11,
+          "value": 1.0000247955322266
+        },
+        {
+          "step": 12,
+          "value": 0.9920634627342224
+        },
+        {
+          "step": 13,
+          "value": 0.9844245910644531
+        },
+        {
+          "step": 14,
+          "value": 0.9777529835700989
+        },
+        {
+          "step": 15,
+          "value": 0.9758184552192688
+        },
+        {
+          "step": 16,
+          "value": 0.9698536992073059
+        },
+        {
+          "step": 17,
+          "value": 0.9641492962837219
+        },
+        {
+          "step": 18,
+          "value": 0.9604166746139526
+        },
+        {
+          "step": 19,
+          "value": 0.9554439187049866
+        },
+        {
+          "step": 20,
+          "value": 0.9538070559501648
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.3851875066757202
+        },
+        {
+          "step": 2,
+          "value": 1.2481249570846558
+        },
+        {
+          "step": 3,
+          "value": 1.1851249933242798
+        },
+        {
+          "step": 4,
+          "value": 1.1435625553131104
+        },
+        {
+          "step": 5,
+          "value": 1.1286875009536743
+        },
+        {
+          "step": 6,
+          "value": 1.1112500429153442
+        },
+        {
+          "step": 7,
+          "value": 1.0870624780654907
+        },
+        {
+          "step": 8,
+          "value": 1.0761250257492065
+        },
+        {
+          "step": 9,
+          "value": 1.0584686994552612
+        },
+        {
+          "step": 10,
+          "value": 1.059093713760376
+        },
+        {
+          "step": 11,
+          "value": 1.0575000047683716
+        },
+        {
+          "step": 12,
+          "value": 1.0453437566757202
+        },
+        {
+          "step": 13,
+          "value": 1.04087495803833
+        },
+        {
+          "step": 14,
+          "value": 1.0356249809265137
+        },
+        {
+          "step": 15,
+          "value": 1.0407500267028809
+        },
+        {
+          "step": 16,
+          "value": 1.027250051498413
+        },
+        {
+          "step": 17,
+          "value": 1.0214375257492065
+        },
+        {
+          "step": 18,
+          "value": 1.0211561918258667
+        },
+        {
+          "step": 19,
+          "value": 1.0190625190734863
+        },
+        {
+          "step": 20,
+          "value": 1.0177812576293945
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.27407923340797424
+        },
+        {
+          "step": 2,
+          "value": 0.2997319996356964
+        },
+        {
+          "step": 3,
+          "value": 0.3259221911430359
+        },
+        {
+          "step": 4,
+          "value": 0.34200865030288696
+        },
+        {
+          "step": 5,
+          "value": 0.34672051668167114
+        },
+        {
+          "step": 6,
+          "value": 0.3594958186149597
+        },
+        {
+          "step": 7,
+          "value": 0.3611469268798828
+        },
+        {
+          "step": 8,
+          "value": 0.3704091012477875
+        },
+        {
+          "step": 9,
+          "value": 0.380424827337265
+        },
+        {
+          "step": 10,
+          "value": 0.3776811361312866
+        },
+        {
+          "step": 11,
+          "value": 0.38451099395751953
+        },
+        {
+          "step": 12,
+          "value": 0.38541677594184875
+        },
+        {
+          "step": 13,
+          "value": 0.3910847306251526
+        },
+        {
+          "step": 14,
+          "value": 0.3964410126209259
+        },
+        {
+          "step": 15,
+          "value": 0.3934781849384308
+        },
+        {
+          "step": 16,
+          "value": 0.39899682998657227
+        },
+        {
+          "step": 17,
+          "value": 0.3978639245033264
+        },
+        {
+          "step": 18,
+          "value": 0.4061477482318878
+        },
+        {
+          "step": 19,
+          "value": 0.4057520627975464
+        },
+        {
+          "step": 20,
+          "value": 0.4003646969795227
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.2670390009880066
+        },
+        {
+          "step": 2,
+          "value": 0.27991506457328796
+        },
+        {
+          "step": 3,
+          "value": 0.30018556118011475
+        },
+        {
+          "step": 4,
+          "value": 0.3136899769306183
+        },
+        {
+          "step": 5,
+          "value": 0.3127339780330658
+        },
+        {
+          "step": 6,
+          "value": 0.3250176012516022
+        },
+        {
+          "step": 7,
+          "value": 0.3231760859489441
+        },
+        {
+          "step": 8,
+          "value": 0.3264400362968445
+        },
+        {
+          "step": 9,
+          "value": 0.33707988262176514
+        },
+        {
+          "step": 10,
+          "value": 0.33056455850601196
+        },
+        {
+          "step": 11,
+          "value": 0.3320545256137848
+        },
+        {
+          "step": 12,
+          "value": 0.335487961769104
+        },
+        {
+          "step": 13,
+          "value": 0.3387849032878876
+        },
+        {
+          "step": 14,
+          "value": 0.3418687582015991
+        },
+        {
+          "step": 15,
+          "value": 0.3361526131629944
+        },
+        {
+          "step": 16,
+          "value": 0.3427998721599579
+        },
+        {
+          "step": 17,
+          "value": 0.3418070077896118
+        },
+        {
+          "step": 18,
+          "value": 0.34401509165763855
+        },
+        {
+          "step": 19,
+          "value": 0.34420040249824524
+        },
+        {
+          "step": 20,
+          "value": 0.34303975105285645
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.6521502733230591
+        },
+        {
+          "step": 2,
+          "value": 0.674938976764679
+        },
+        {
+          "step": 3,
+          "value": 0.689617395401001
+        },
+        {
+          "step": 4,
+          "value": 0.6964099407196045
+        },
+        {
+          "step": 5,
+          "value": 0.6988683342933655
+        },
+        {
+          "step": 6,
+          "value": 0.7027388215065002
+        },
+        {
+          "step": 7,
+          "value": 0.7073111534118652
+        },
+        {
+          "step": 8,
+          "value": 0.7087872624397278
+        },
+        {
+          "step": 9,
+          "value": 0.7150388956069946
+        },
+        {
+          "step": 10,
+          "value": 0.7142083644866943
+        },
+        {
+          "step": 11,
+          "value": 0.7139101624488831
+        },
+        {
+          "step": 12,
+          "value": 0.7148118615150452
+        },
+        {
+          "step": 13,
+          "value": 0.7189875841140747
+        },
+        {
+          "step": 14,
+          "value": 0.7199210524559021
+        },
+        {
+          "step": 15,
+          "value": 0.7197250127792358
+        },
+        {
+          "step": 16,
+          "value": 0.720525324344635
+        },
+        {
+          "step": 17,
+          "value": 0.7224203944206238
+        },
+        {
+          "step": 18,
+          "value": 0.7246477007865906
+        },
+        {
+          "step": 19,
+          "value": 0.7225996851921082
+        },
+        {
+          "step": 20,
+          "value": 0.7235136032104492
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.6500184535980225
+        },
+        {
+          "step": 2,
+          "value": 0.6711055040359497
+        },
+        {
+          "step": 3,
+          "value": 0.6826094388961792
+        },
+        {
+          "step": 4,
+          "value": 0.6891964077949524
+        },
+        {
+          "step": 5,
+          "value": 0.6916542053222656
+        },
+        {
+          "step": 6,
+          "value": 0.6943156123161316
+        },
+        {
+          "step": 7,
+          "value": 0.6988569498062134
+        },
+        {
+          "step": 8,
+          "value": 0.7000280618667603
+        },
+        {
+          "step": 9,
+          "value": 0.704981803894043
+        },
+        {
+          "step": 10,
+          "value": 0.7036255598068237
+        },
+        {
+          "step": 11,
+          "value": 0.7014206647872925
+        },
+        {
+          "step": 12,
+          "value": 0.7037473917007446
+        },
+        {
+          "step": 13,
+          "value": 0.7074552178382874
+        },
+        {
+          "step": 14,
+          "value": 0.7069405317306519
+        },
+        {
+          "step": 15,
+          "value": 0.7061514854431152
+        },
+        {
+          "step": 16,
+          "value": 0.7076610922813416
+        },
+        {
+          "step": 17,
+          "value": 0.7104781270027161
+        },
+        {
+          "step": 18,
+          "value": 0.711263120174408
+        },
+        {
+          "step": 19,
+          "value": 0.7088454365730286
+        },
+        {
+          "step": 20,
+          "value": 0.7109445929527283
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.34420040249824524,
+        "step": 19
+      },
+      "best_pixel_val": {
+        "value": 0.711263120174408,
+        "step": 18
+      },
+      "lowest_loss_val": {
+        "value": 1.0177812576293945,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.34303975105285645,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.7109445929527283,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.0177812576293945,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.4003646969795227,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7235136032104492,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 0.9538070559501648,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 20,
+    "image": "finalresults/pics/llava_val_vis_layer20.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.6168898344039917
+        },
+        {
+          "step": 2,
+          "value": 1.2449653148651123
+        },
+        {
+          "step": 3,
+          "value": 1.1601190567016602
+        },
+        {
+          "step": 4,
+          "value": 1.108866572380066
+        },
+        {
+          "step": 5,
+          "value": 1.0723834037780762
+        },
+        {
+          "step": 6,
+          "value": 1.0512772798538208
+        },
+        {
+          "step": 7,
+          "value": 1.0309523344039917
+        },
+        {
+          "step": 8,
+          "value": 1.0166170597076416
+        },
+        {
+          "step": 9,
+          "value": 1.004538655281067
+        },
+        {
+          "step": 10,
+          "value": 0.9956845045089722
+        },
+        {
+          "step": 11,
+          "value": 0.9849826097488403
+        },
+        {
+          "step": 12,
+          "value": 0.9757564663887024
+        },
+        {
+          "step": 13,
+          "value": 0.9715401530265808
+        },
+        {
+          "step": 14,
+          "value": 0.9662326574325562
+        },
+        {
+          "step": 15,
+          "value": 0.9585317373275757
+        },
+        {
+          "step": 16,
+          "value": 0.9550347328186035
+        },
+        {
+          "step": 17,
+          "value": 0.9513145089149475
+        },
+        {
+          "step": 18,
+          "value": 0.9494419693946838
+        },
+        {
+          "step": 19,
+          "value": 0.9447420835494995
+        },
+        {
+          "step": 20,
+          "value": 0.9388392567634583
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.3125624656677246
+        },
+        {
+          "step": 2,
+          "value": 1.2101249694824219
+        },
+        {
+          "step": 3,
+          "value": 1.1541874408721924
+        },
+        {
+          "step": 4,
+          "value": 1.1238125562667847
+        },
+        {
+          "step": 5,
+          "value": 1.1059374809265137
+        },
+        {
+          "step": 6,
+          "value": 1.090000033378601
+        },
+        {
+          "step": 7,
+          "value": 1.071874976158142
+        },
+        {
+          "step": 8,
+          "value": 1.074125051498413
+        },
+        {
+          "step": 9,
+          "value": 1.0586249828338623
+        },
+        {
+          "step": 10,
+          "value": 1.057687520980835
+        },
+        {
+          "step": 11,
+          "value": 1.0393749475479126
+        },
+        {
+          "step": 12,
+          "value": 1.0460624694824219
+        },
+        {
+          "step": 13,
+          "value": 1.0334374904632568
+        },
+        {
+          "step": 14,
+          "value": 1.0315624475479126
+        },
+        {
+          "step": 15,
+          "value": 1.035656213760376
+        },
+        {
+          "step": 16,
+          "value": 1.0263437032699585
+        },
+        {
+          "step": 17,
+          "value": 1.029937505722046
+        },
+        {
+          "step": 18,
+          "value": 1.0221874713897705
+        },
+        {
+          "step": 19,
+          "value": 1.0303750038146973
+        },
+        {
+          "step": 20,
+          "value": 1.0230624675750732
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.28639382123947144
+        },
+        {
+          "step": 2,
+          "value": 0.3184363842010498
+        },
+        {
+          "step": 3,
+          "value": 0.34922388195991516
+        },
+        {
+          "step": 4,
+          "value": 0.35931408405303955
+        },
+        {
+          "step": 5,
+          "value": 0.36028969287872314
+        },
+        {
+          "step": 6,
+          "value": 0.37220484018325806
+        },
+        {
+          "step": 7,
+          "value": 0.37582504749298096
+        },
+        {
+          "step": 8,
+          "value": 0.3851662874221802
+        },
+        {
+          "step": 9,
+          "value": 0.3909723460674286
+        },
+        {
+          "step": 10,
+          "value": 0.3952260911464691
+        },
+        {
+          "step": 11,
+          "value": 0.3984522521495819
+        },
+        {
+          "step": 12,
+          "value": 0.39730432629585266
+        },
+        {
+          "step": 13,
+          "value": 0.40908753871917725
+        },
+        {
+          "step": 14,
+          "value": 0.4068114459514618
+        },
+        {
+          "step": 15,
+          "value": 0.4061349630355835
+        },
+        {
+          "step": 16,
+          "value": 0.4106301963329315
+        },
+        {
+          "step": 17,
+          "value": 0.41353678703308105
+        },
+        {
+          "step": 18,
+          "value": 0.41699421405792236
+        },
+        {
+          "step": 19,
+          "value": 0.4157518744468689
+        },
+        {
+          "step": 20,
+          "value": 0.41749849915504456
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.27194249629974365
+        },
+        {
+          "step": 2,
+          "value": 0.29429900646209717
+        },
+        {
+          "step": 3,
+          "value": 0.31841349601745605
+        },
+        {
+          "step": 4,
+          "value": 0.31979355216026306
+        },
+        {
+          "step": 5,
+          "value": 0.3189079761505127
+        },
+        {
+          "step": 6,
+          "value": 0.32877904176712036
+        },
+        {
+          "step": 7,
+          "value": 0.32548701763153076
+        },
+        {
+          "step": 8,
+          "value": 0.3272489607334137
+        },
+        {
+          "step": 9,
+          "value": 0.3338792026042938
+        },
+        {
+          "step": 10,
+          "value": 0.3352554738521576
+        },
+        {
+          "step": 11,
+          "value": 0.3392883241176605
+        },
+        {
+          "step": 12,
+          "value": 0.33535799384117126
+        },
+        {
+          "step": 13,
+          "value": 0.3453853130340576
+        },
+        {
+          "step": 14,
+          "value": 0.34063422679901123
+        },
+        {
+          "step": 15,
+          "value": 0.34154513478279114
+        },
+        {
+          "step": 16,
+          "value": 0.34517142176628113
+        },
+        {
+          "step": 17,
+          "value": 0.34609633684158325
+        },
+        {
+          "step": 18,
+          "value": 0.34684205055236816
+        },
+        {
+          "step": 19,
+          "value": 0.3433830440044403
+        },
+        {
+          "step": 20,
+          "value": 0.3450089693069458
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.664962887763977
+        },
+        {
+          "step": 2,
+          "value": 0.6797894835472107
+        },
+        {
+          "step": 3,
+          "value": 0.6954936981201172
+        },
+        {
+          "step": 4,
+          "value": 0.698840320110321
+        },
+        {
+          "step": 5,
+          "value": 0.7045361399650574
+        },
+        {
+          "step": 6,
+          "value": 0.7075817584991455
+        },
+        {
+          "step": 7,
+          "value": 0.7118922472000122
+        },
+        {
+          "step": 8,
+          "value": 0.7138608694076538
+        },
+        {
+          "step": 9,
+          "value": 0.714931309223175
+        },
+        {
+          "step": 10,
+          "value": 0.7158518433570862
+        },
+        {
+          "step": 11,
+          "value": 0.7189220786094666
+        },
+        {
+          "step": 12,
+          "value": 0.7185794115066528
+        },
+        {
+          "step": 13,
+          "value": 0.722358763217926
+        },
+        {
+          "step": 14,
+          "value": 0.7195101380348206
+        },
+        {
+          "step": 15,
+          "value": 0.7215728759765625
+        },
+        {
+          "step": 16,
+          "value": 0.7229131460189819
+        },
+        {
+          "step": 17,
+          "value": 0.722243070602417
+        },
+        {
+          "step": 18,
+          "value": 0.7256510257720947
+        },
+        {
+          "step": 19,
+          "value": 0.7233214974403381
+        },
+        {
+          "step": 20,
+          "value": 0.7244548201560974
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.6617611050605774
+        },
+        {
+          "step": 2,
+          "value": 0.6757699251174927
+        },
+        {
+          "step": 3,
+          "value": 0.6880636215209961
+        },
+        {
+          "step": 4,
+          "value": 0.6909868121147156
+        },
+        {
+          "step": 5,
+          "value": 0.6944976449012756
+        },
+        {
+          "step": 6,
+          "value": 0.6977878212928772
+        },
+        {
+          "step": 7,
+          "value": 0.7005922794342041
+        },
+        {
+          "step": 8,
+          "value": 0.6997498273849487
+        },
+        {
+          "step": 9,
+          "value": 0.7021399736404419
+        },
+        {
+          "step": 10,
+          "value": 0.7022088766098022
+        },
+        {
+          "step": 11,
+          "value": 0.7042369842529297
+        },
+        {
+          "step": 12,
+          "value": 0.7036555409431458
+        },
+        {
+          "step": 13,
+          "value": 0.7071294188499451
+        },
+        {
+          "step": 14,
+          "value": 0.7057497501373291
+        },
+        {
+          "step": 15,
+          "value": 0.7064947485923767
+        },
+        {
+          "step": 16,
+          "value": 0.7081162333488464
+        },
+        {
+          "step": 17,
+          "value": 0.7063513994216919
+        },
+        {
+          "step": 18,
+          "value": 0.7089436054229736
+        },
+        {
+          "step": 19,
+          "value": 0.705486536026001
+        },
+        {
+          "step": 20,
+          "value": 0.708115816116333
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.34684205055236816,
+        "step": 18
+      },
+      "best_pixel_val": {
+        "value": 0.7089436054229736,
+        "step": 18
+      },
+      "lowest_loss_val": {
+        "value": 1.0221874713897705,
+        "step": 18
+      },
+      "final_mIoU_val": {
+        "value": 0.3450089693069458,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.708115816116333,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.0230624675750732,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.41749849915504456,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7244548201560974,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 0.9388392567634583,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 24,
+    "image": "finalresults/pics/llava_val_vis_layer24.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.5454365015029907
+        },
+        {
+          "step": 2,
+          "value": 1.230927586555481
+        },
+        {
+          "step": 3,
+          "value": 1.1470485925674438
+        },
+        {
+          "step": 4,
+          "value": 1.1052579879760742
+        },
+        {
+          "step": 5,
+          "value": 1.0739458799362183
+        },
+        {
+          "step": 6,
+          "value": 1.0490450859069824
+        },
+        {
+          "step": 7,
+          "value": 1.0301339626312256
+        },
+        {
+          "step": 8,
+          "value": 1.0196304321289062
+        },
+        {
+          "step": 9,
+          "value": 1.0040922164916992
+        },
+        {
+          "step": 10,
+          "value": 0.9960813522338867
+        },
+        {
+          "step": 11,
+          "value": 0.9864087104797363
+        },
+        {
+          "step": 12,
+          "value": 0.9786210060119629
+        },
+        {
+          "step": 13,
+          "value": 0.9715277552604675
+        },
+        {
+          "step": 14,
+          "value": 0.9649677872657776
+        },
+        {
+          "step": 15,
+          "value": 0.9584449529647827
+        },
+        {
+          "step": 16,
+          "value": 0.9533606171607971
+        },
+        {
+          "step": 17,
+          "value": 0.9521329402923584
+        },
+        {
+          "step": 18,
+          "value": 0.9474206566810608
+        },
+        {
+          "step": 19,
+          "value": 0.9442336559295654
+        },
+        {
+          "step": 20,
+          "value": 0.9393601417541504
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.3218125104904175
+        },
+        {
+          "step": 2,
+          "value": 1.202375054359436
+        },
+        {
+          "step": 3,
+          "value": 1.1575000286102295
+        },
+        {
+          "step": 4,
+          "value": 1.1378124952316284
+        },
+        {
+          "step": 5,
+          "value": 1.1193125247955322
+        },
+        {
+          "step": 6,
+          "value": 1.1054999828338623
+        },
+        {
+          "step": 7,
+          "value": 1.0906250476837158
+        },
+        {
+          "step": 8,
+          "value": 1.0931249856948853
+        },
+        {
+          "step": 9,
+          "value": 1.076968789100647
+        },
+        {
+          "step": 10,
+          "value": 1.081125020980835
+        },
+        {
+          "step": 11,
+          "value": 1.0666249990463257
+        },
+        {
+          "step": 12,
+          "value": 1.0659375190734863
+        },
+        {
+          "step": 13,
+          "value": 1.0543124675750732
+        },
+        {
+          "step": 14,
+          "value": 1.0535000562667847
+        },
+        {
+          "step": 15,
+          "value": 1.0458124876022339
+        },
+        {
+          "step": 16,
+          "value": 1.0452812910079956
+        },
+        {
+          "step": 17,
+          "value": 1.0527812242507935
+        },
+        {
+          "step": 18,
+          "value": 1.0563437938690186
+        },
+        {
+          "step": 19,
+          "value": 1.0621249675750732
+        },
+        {
+          "step": 20,
+          "value": 1.0526875257492065
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.2982625961303711
+        },
+        {
+          "step": 2,
+          "value": 0.32890820503234863
+        },
+        {
+          "step": 3,
+          "value": 0.34600457549095154
+        },
+        {
+          "step": 4,
+          "value": 0.36133575439453125
+        },
+        {
+          "step": 5,
+          "value": 0.3711833655834198
+        },
+        {
+          "step": 6,
+          "value": 0.3743813931941986
+        },
+        {
+          "step": 7,
+          "value": 0.38257262110710144
+        },
+        {
+          "step": 8,
+          "value": 0.38337141275405884
+        },
+        {
+          "step": 9,
+          "value": 0.3920385539531708
+        },
+        {
+          "step": 10,
+          "value": 0.4007962942123413
+        },
+        {
+          "step": 11,
+          "value": 0.4037904143333435
+        },
+        {
+          "step": 12,
+          "value": 0.4097822606563568
+        },
+        {
+          "step": 13,
+          "value": 0.4091683626174927
+        },
+        {
+          "step": 14,
+          "value": 0.4172174036502838
+        },
+        {
+          "step": 15,
+          "value": 0.4219146966934204
+        },
+        {
+          "step": 16,
+          "value": 0.41785192489624023
+        },
+        {
+          "step": 17,
+          "value": 0.4218457341194153
+        },
+        {
+          "step": 18,
+          "value": 0.42242375016212463
+        },
+        {
+          "step": 19,
+          "value": 0.42310431599617004
+        },
+        {
+          "step": 20,
+          "value": 0.4301091134548187
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.27780094742774963
+        },
+        {
+          "step": 2,
+          "value": 0.30060362815856934
+        },
+        {
+          "step": 3,
+          "value": 0.30702006816864014
+        },
+        {
+          "step": 4,
+          "value": 0.31618669629096985
+        },
+        {
+          "step": 5,
+          "value": 0.3216484487056732
+        },
+        {
+          "step": 6,
+          "value": 0.3209589719772339
+        },
+        {
+          "step": 7,
+          "value": 0.32657772302627563
+        },
+        {
+          "step": 8,
+          "value": 0.3195405900478363
+        },
+        {
+          "step": 9,
+          "value": 0.32883259654045105
+        },
+        {
+          "step": 10,
+          "value": 0.3336429297924042
+        },
+        {
+          "step": 11,
+          "value": 0.33672139048576355
+        },
+        {
+          "step": 12,
+          "value": 0.3374635577201843
+        },
+        {
+          "step": 13,
+          "value": 0.34024086594581604
+        },
+        {
+          "step": 14,
+          "value": 0.33939260244369507
+        },
+        {
+          "step": 15,
+          "value": 0.34565800428390503
+        },
+        {
+          "step": 16,
+          "value": 0.3379116952419281
+        },
+        {
+          "step": 17,
+          "value": 0.34095582365989685
+        },
+        {
+          "step": 18,
+          "value": 0.33817413449287415
+        },
+        {
+          "step": 19,
+          "value": 0.33988872170448303
+        },
+        {
+          "step": 20,
+          "value": 0.34214305877685547
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.6602993011474609
+        },
+        {
+          "step": 2,
+          "value": 0.6824334263801575
+        },
+        {
+          "step": 3,
+          "value": 0.6910399198532104
+        },
+        {
+          "step": 4,
+          "value": 0.7013065814971924
+        },
+        {
+          "step": 5,
+          "value": 0.7014862895011902
+        },
+        {
+          "step": 6,
+          "value": 0.706201434135437
+        },
+        {
+          "step": 7,
+          "value": 0.710047721862793
+        },
+        {
+          "step": 8,
+          "value": 0.711349368095398
+        },
+        {
+          "step": 9,
+          "value": 0.7157282829284668
+        },
+        {
+          "step": 10,
+          "value": 0.7125433087348938
+        },
+        {
+          "step": 11,
+          "value": 0.7166808247566223
+        },
+        {
+          "step": 12,
+          "value": 0.7175353765487671
+        },
+        {
+          "step": 13,
+          "value": 0.7200174331665039
+        },
+        {
+          "step": 14,
+          "value": 0.7211004495620728
+        },
+        {
+          "step": 15,
+          "value": 0.7233152389526367
+        },
+        {
+          "step": 16,
+          "value": 0.7227226495742798
+        },
+        {
+          "step": 17,
+          "value": 0.7228429913520813
+        },
+        {
+          "step": 18,
+          "value": 0.7231849431991577
+        },
+        {
+          "step": 19,
+          "value": 0.7217402458190918
+        },
+        {
+          "step": 20,
+          "value": 0.7248574495315552
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.6531440615653992
+        },
+        {
+          "step": 2,
+          "value": 0.6756938099861145
+        },
+        {
+          "step": 3,
+          "value": 0.6837263703346252
+        },
+        {
+          "step": 4,
+          "value": 0.6895925998687744
+        },
+        {
+          "step": 5,
+          "value": 0.6911400556564331
+        },
+        {
+          "step": 6,
+          "value": 0.6933296322822571
+        },
+        {
+          "step": 7,
+          "value": 0.6978261470794678
+        },
+        {
+          "step": 8,
+          "value": 0.6962528228759766
+        },
+        {
+          "step": 9,
+          "value": 0.7009895443916321
+        },
+        {
+          "step": 10,
+          "value": 0.6973140835762024
+        },
+        {
+          "step": 11,
+          "value": 0.7013445496559143
+        },
+        {
+          "step": 12,
+          "value": 0.6983066201210022
+        },
+        {
+          "step": 13,
+          "value": 0.7037314176559448
+        },
+        {
+          "step": 14,
+          "value": 0.7019373774528503
+        },
+        {
+          "step": 15,
+          "value": 0.7045765519142151
+        },
+        {
+          "step": 16,
+          "value": 0.7038975358009338
+        },
+        {
+          "step": 17,
+          "value": 0.7029600739479065
+        },
+        {
+          "step": 18,
+          "value": 0.7023860216140747
+        },
+        {
+          "step": 19,
+          "value": 0.6999338865280151
+        },
+        {
+          "step": 20,
+          "value": 0.7042773365974426
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.34565800428390503,
+        "step": 15
+      },
+      "best_pixel_val": {
+        "value": 0.7045765519142151,
+        "step": 15
+      },
+      "lowest_loss_val": {
+        "value": 1.0452812910079956,
+        "step": 16
+      },
+      "final_mIoU_val": {
+        "value": 0.34214305877685547,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.7042773365974426,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.0526875257492065,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.4301091134548187,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7248574495315552,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 0.9393601417541504,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 28,
+    "image": "finalresults/pics/llava_val_vis_layer28.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.527802586555481
+        },
+        {
+          "step": 2,
+          "value": 1.2315723896026611
+        },
+        {
+          "step": 3,
+          "value": 1.15109121799469
+        },
+        {
+          "step": 4,
+          "value": 1.1112103462219238
+        },
+        {
+          "step": 5,
+          "value": 1.0800223350524902
+        },
+        {
+          "step": 6,
+          "value": 1.0561259984970093
+        },
+        {
+          "step": 7,
+          "value": 1.0383059978485107
+        },
+        {
+          "step": 8,
+          "value": 1.022842288017273
+        },
+        {
+          "step": 9,
+          "value": 1.012264370918274
+        },
+        {
+          "step": 10,
+          "value": 1.0020833015441895
+        },
+        {
+          "step": 11,
+          "value": 0.9931051731109619
+        },
+        {
+          "step": 12,
+          "value": 0.9835069179534912
+        },
+        {
+          "step": 13,
+          "value": 0.9767981171607971
+        },
+        {
+          "step": 14,
+          "value": 0.9722346067428589
+        },
+        {
+          "step": 15,
+          "value": 0.9657366275787354
+        },
+        {
+          "step": 16,
+          "value": 0.9685763716697693
+        },
+        {
+          "step": 17,
+          "value": 0.960850715637207
+        },
+        {
+          "step": 18,
+          "value": 0.9512648582458496
+        },
+        {
+          "step": 19,
+          "value": 0.9519593119621277
+        },
+        {
+          "step": 20,
+          "value": 0.9517484903335571
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.2941875457763672
+        },
+        {
+          "step": 2,
+          "value": 1.2207499742507935
+        },
+        {
+          "step": 3,
+          "value": 1.187593698501587
+        },
+        {
+          "step": 4,
+          "value": 1.1436874866485596
+        },
+        {
+          "step": 5,
+          "value": 1.1414375305175781
+        },
+        {
+          "step": 6,
+          "value": 1.136875033378601
+        },
+        {
+          "step": 7,
+          "value": 1.114437460899353
+        },
+        {
+          "step": 8,
+          "value": 1.1017500162124634
+        },
+        {
+          "step": 9,
+          "value": 1.0987499952316284
+        },
+        {
+          "step": 10,
+          "value": 1.115875005722046
+        },
+        {
+          "step": 11,
+          "value": 1.0968749523162842
+        },
+        {
+          "step": 12,
+          "value": 1.0906250476837158
+        },
+        {
+          "step": 13,
+          "value": 1.0769375562667847
+        },
+        {
+          "step": 14,
+          "value": 1.0719374418258667
+        },
+        {
+          "step": 15,
+          "value": 1.089187502861023
+        },
+        {
+          "step": 16,
+          "value": 1.079687476158142
+        },
+        {
+          "step": 17,
+          "value": 1.0718125104904175
+        },
+        {
+          "step": 18,
+          "value": 1.0712811946868896
+        },
+        {
+          "step": 19,
+          "value": 1.071062445640564
+        },
+        {
+          "step": 20,
+          "value": 1.0720937252044678
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.30739808082580566
+        },
+        {
+          "step": 2,
+          "value": 0.33966368436813354
+        },
+        {
+          "step": 3,
+          "value": 0.3519706726074219
+        },
+        {
+          "step": 4,
+          "value": 0.3731273412704468
+        },
+        {
+          "step": 5,
+          "value": 0.37703511118888855
+        },
+        {
+          "step": 6,
+          "value": 0.37708765268325806
+        },
+        {
+          "step": 7,
+          "value": 0.3946085572242737
+        },
+        {
+          "step": 8,
+          "value": 0.40415120124816895
+        },
+        {
+          "step": 9,
+          "value": 0.400837242603302
+        },
+        {
+          "step": 10,
+          "value": 0.4021286368370056
+        },
+        {
+          "step": 11,
+          "value": 0.4066043794155121
+        },
+        {
+          "step": 12,
+          "value": 0.4145326316356659
+        },
+        {
+          "step": 13,
+          "value": 0.41665804386138916
+        },
+        {
+          "step": 14,
+          "value": 0.4196138083934784
+        },
+        {
+          "step": 15,
+          "value": 0.42326369881629944
+        },
+        {
+          "step": 16,
+          "value": 0.4303220808506012
+        },
+        {
+          "step": 17,
+          "value": 0.4326923191547394
+        },
+        {
+          "step": 18,
+          "value": 0.4332438111305237
+        },
+        {
+          "step": 19,
+          "value": 0.4353370666503906
+        },
+        {
+          "step": 20,
+          "value": 0.4358443319797516
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.2847134470939636
+        },
+        {
+          "step": 2,
+          "value": 0.305109441280365
+        },
+        {
+          "step": 3,
+          "value": 0.30692869424819946
+        },
+        {
+          "step": 4,
+          "value": 0.3230968713760376
+        },
+        {
+          "step": 5,
+          "value": 0.321848064661026
+        },
+        {
+          "step": 6,
+          "value": 0.3150428235530853
+        },
+        {
+          "step": 7,
+          "value": 0.3282701373100281
+        },
+        {
+          "step": 8,
+          "value": 0.3335704803466797
+        },
+        {
+          "step": 9,
+          "value": 0.3261353373527527
+        },
+        {
+          "step": 10,
+          "value": 0.3274666965007782
+        },
+        {
+          "step": 11,
+          "value": 0.3277835249900818
+        },
+        {
+          "step": 12,
+          "value": 0.337692528963089
+        },
+        {
+          "step": 13,
+          "value": 0.33800458908081055
+        },
+        {
+          "step": 14,
+          "value": 0.3339128792285919
+        },
+        {
+          "step": 15,
+          "value": 0.3339845836162567
+        },
+        {
+          "step": 16,
+          "value": 0.3394143283367157
+        },
+        {
+          "step": 17,
+          "value": 0.3373754322528839
+        },
+        {
+          "step": 18,
+          "value": 0.3367012143135071
+        },
+        {
+          "step": 19,
+          "value": 0.33945730328559875
+        },
+        {
+          "step": 20,
+          "value": 0.34048813581466675
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.6677629351615906
+        },
+        {
+          "step": 2,
+          "value": 0.6856846213340759
+        },
+        {
+          "step": 3,
+          "value": 0.6893833875656128
+        },
+        {
+          "step": 4,
+          "value": 0.7013040781021118
+        },
+        {
+          "step": 5,
+          "value": 0.7042640447616577
+        },
+        {
+          "step": 6,
+          "value": 0.7048987150192261
+        },
+        {
+          "step": 7,
+          "value": 0.7085049748420715
+        },
+        {
+          "step": 8,
+          "value": 0.7106750011444092
+        },
+        {
+          "step": 9,
+          "value": 0.7145929932594299
+        },
+        {
+          "step": 10,
+          "value": 0.7102916240692139
+        },
+        {
+          "step": 11,
+          "value": 0.7162183523178101
+        },
+        {
+          "step": 12,
+          "value": 0.7144410610198975
+        },
+        {
+          "step": 13,
+          "value": 0.7195443511009216
+        },
+        {
+          "step": 14,
+          "value": 0.7214556932449341
+        },
+        {
+          "step": 15,
+          "value": 0.7210841178894043
+        },
+        {
+          "step": 16,
+          "value": 0.7207842469215393
+        },
+        {
+          "step": 17,
+          "value": 0.7222791314125061
+        },
+        {
+          "step": 18,
+          "value": 0.7251078486442566
+        },
+        {
+          "step": 19,
+          "value": 0.7257450819015503
+        },
+        {
+          "step": 20,
+          "value": 0.7222903966903687
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.663320004940033
+        },
+        {
+          "step": 2,
+          "value": 0.6753330230712891
+        },
+        {
+          "step": 3,
+          "value": 0.6786027550697327
+        },
+        {
+          "step": 4,
+          "value": 0.6878712177276611
+        },
+        {
+          "step": 5,
+          "value": 0.6884515881538391
+        },
+        {
+          "step": 6,
+          "value": 0.6872626543045044
+        },
+        {
+          "step": 7,
+          "value": 0.6912053227424622
+        },
+        {
+          "step": 8,
+          "value": 0.6937373280525208
+        },
+        {
+          "step": 9,
+          "value": 0.6952982544898987
+        },
+        {
+          "step": 10,
+          "value": 0.6908553838729858
+        },
+        {
+          "step": 11,
+          "value": 0.6971715688705444
+        },
+        {
+          "step": 12,
+          "value": 0.6962260007858276
+        },
+        {
+          "step": 13,
+          "value": 0.6993276476860046
+        },
+        {
+          "step": 14,
+          "value": 0.7008477449417114
+        },
+        {
+          "step": 15,
+          "value": 0.6967899203300476
+        },
+        {
+          "step": 16,
+          "value": 0.6995998620986938
+        },
+        {
+          "step": 17,
+          "value": 0.6992795467376709
+        },
+        {
+          "step": 18,
+          "value": 0.7010613679885864
+        },
+        {
+          "step": 19,
+          "value": 0.702524721622467
+        },
+        {
+          "step": 20,
+          "value": 0.6990652084350586
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.34048813581466675,
+        "step": 20
+      },
+      "best_pixel_val": {
+        "value": 0.702524721622467,
+        "step": 19
+      },
+      "lowest_loss_val": {
+        "value": 1.071062445640564,
+        "step": 19
+      },
+      "final_mIoU_val": {
+        "value": 0.34048813581466675,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.6990652084350586,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.0720937252044678,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.4358443319797516,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7222903966903687,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 0.9517484903335571,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 31,
+    "image": "finalresults/pics/llava_val_vis_layer31.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.5034722089767456
+        },
+        {
+          "step": 2,
+          "value": 1.1973958015441895
+        },
+        {
+          "step": 3,
+          "value": 1.133444905281067
+        },
+        {
+          "step": 4,
+          "value": 1.0853670835494995
+        },
+        {
+          "step": 5,
+          "value": 1.0608383417129517
+        },
+        {
+          "step": 6,
+          "value": 1.035900354385376
+        },
+        {
+          "step": 7,
+          "value": 1.0174355506896973
+        },
+        {
+          "step": 8,
+          "value": 1.007440447807312
+        },
+        {
+          "step": 9,
+          "value": 0.9937127828598022
+        },
+        {
+          "step": 10,
+          "value": 0.9814484119415283
+        },
+        {
+          "step": 11,
+          "value": 0.9720486402511597
+        },
+        {
+          "step": 12,
+          "value": 0.9699280858039856
+        },
+        {
+          "step": 13,
+          "value": 0.9607762694358826
+        },
+        {
+          "step": 14,
+          "value": 0.9527778029441833
+        },
+        {
+          "step": 15,
+          "value": 0.9493179321289062
+        },
+        {
+          "step": 16,
+          "value": 0.9461557269096375
+        },
+        {
+          "step": 17,
+          "value": 0.9450024962425232
+        },
+        {
+          "step": 18,
+          "value": 0.935801088809967
+        },
+        {
+          "step": 19,
+          "value": 0.9305927753448486
+        },
+        {
+          "step": 20,
+          "value": 0.9287078380584717
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.2781875133514404
+        },
+        {
+          "step": 2,
+          "value": 1.2156250476837158
+        },
+        {
+          "step": 3,
+          "value": 1.1623125076293945
+        },
+        {
+          "step": 4,
+          "value": 1.1623125076293945
+        },
+        {
+          "step": 5,
+          "value": 1.1299375295639038
+        },
+        {
+          "step": 6,
+          "value": 1.120187520980835
+        },
+        {
+          "step": 7,
+          "value": 1.1221562623977661
+        },
+        {
+          "step": 8,
+          "value": 1.1167500019073486
+        },
+        {
+          "step": 9,
+          "value": 1.100812554359436
+        },
+        {
+          "step": 10,
+          "value": 1.1030000448226929
+        },
+        {
+          "step": 11,
+          "value": 1.0852187871932983
+        },
+        {
+          "step": 12,
+          "value": 1.0950937271118164
+        },
+        {
+          "step": 13,
+          "value": 1.084531307220459
+        },
+        {
+          "step": 14,
+          "value": 1.0903749465942383
+        },
+        {
+          "step": 15,
+          "value": 1.0829999446868896
+        },
+        {
+          "step": 16,
+          "value": 1.0857499837875366
+        },
+        {
+          "step": 17,
+          "value": 1.0755937099456787
+        },
+        {
+          "step": 18,
+          "value": 1.0747499465942383
+        },
+        {
+          "step": 19,
+          "value": 1.0773124694824219
+        },
+        {
+          "step": 20,
+          "value": 1.0721561908721924
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.31253325939178467
+        },
+        {
+          "step": 2,
+          "value": 0.33533936738967896
+        },
+        {
+          "step": 3,
+          "value": 0.35685425996780396
+        },
+        {
+          "step": 4,
+          "value": 0.3801681101322174
+        },
+        {
+          "step": 5,
+          "value": 0.3832988440990448
+        },
+        {
+          "step": 6,
+          "value": 0.3942525386810303
+        },
+        {
+          "step": 7,
+          "value": 0.4027324318885803
+        },
+        {
+          "step": 8,
+          "value": 0.40908703207969666
+        },
+        {
+          "step": 9,
+          "value": 0.4156348705291748
+        },
+        {
+          "step": 10,
+          "value": 0.4172496497631073
+        },
+        {
+          "step": 11,
+          "value": 0.4243831932544708
+        },
+        {
+          "step": 12,
+          "value": 0.4234395921230316
+        },
+        {
+          "step": 13,
+          "value": 0.4336616098880768
+        },
+        {
+          "step": 14,
+          "value": 0.4272162914276123
+        },
+        {
+          "step": 15,
+          "value": 0.4376301169395447
+        },
+        {
+          "step": 16,
+          "value": 0.42921754717826843
+        },
+        {
+          "step": 17,
+          "value": 0.43916094303131104
+        },
+        {
+          "step": 18,
+          "value": 0.44689902663230896
+        },
+        {
+          "step": 19,
+          "value": 0.4426933825016022
+        },
+        {
+          "step": 20,
+          "value": 0.44128933548927307
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.2828111946582794
+        },
+        {
+          "step": 2,
+          "value": 0.3008778691291809
+        },
+        {
+          "step": 3,
+          "value": 0.30980241298675537
+        },
+        {
+          "step": 4,
+          "value": 0.3231743276119232
+        },
+        {
+          "step": 5,
+          "value": 0.32249584794044495
+        },
+        {
+          "step": 6,
+          "value": 0.324320524930954
+        },
+        {
+          "step": 7,
+          "value": 0.32711321115493774
+        },
+        {
+          "step": 8,
+          "value": 0.330538272857666
+        },
+        {
+          "step": 9,
+          "value": 0.33231791853904724
+        },
+        {
+          "step": 10,
+          "value": 0.3299219310283661
+        },
+        {
+          "step": 11,
+          "value": 0.33367326855659485
+        },
+        {
+          "step": 12,
+          "value": 0.33560216426849365
+        },
+        {
+          "step": 13,
+          "value": 0.3364921510219574
+        },
+        {
+          "step": 14,
+          "value": 0.32711681723594666
+        },
+        {
+          "step": 15,
+          "value": 0.33872243762016296
+        },
+        {
+          "step": 16,
+          "value": 0.3327120244503021
+        },
+        {
+          "step": 17,
+          "value": 0.33700665831565857
+        },
+        {
+          "step": 18,
+          "value": 0.3402823805809021
+        },
+        {
+          "step": 19,
+          "value": 0.33573904633522034
+        },
+        {
+          "step": 20,
+          "value": 0.33369871973991394
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.6723574995994568
+        },
+        {
+          "step": 2,
+          "value": 0.6871532797813416
+        },
+        {
+          "step": 3,
+          "value": 0.6985278129577637
+        },
+        {
+          "step": 4,
+          "value": 0.7024162411689758
+        },
+        {
+          "step": 5,
+          "value": 0.7035301923751831
+        },
+        {
+          "step": 6,
+          "value": 0.7108365297317505
+        },
+        {
+          "step": 7,
+          "value": 0.7107730507850647
+        },
+        {
+          "step": 8,
+          "value": 0.7109002470970154
+        },
+        {
+          "step": 9,
+          "value": 0.7191355228424072
+        },
+        {
+          "step": 10,
+          "value": 0.7196623086929321
+        },
+        {
+          "step": 11,
+          "value": 0.7195917367935181
+        },
+        {
+          "step": 12,
+          "value": 0.7201558947563171
+        },
+        {
+          "step": 13,
+          "value": 0.7245650291442871
+        },
+        {
+          "step": 14,
+          "value": 0.7216582894325256
+        },
+        {
+          "step": 15,
+          "value": 0.7198531031608582
+        },
+        {
+          "step": 16,
+          "value": 0.7231461405754089
+        },
+        {
+          "step": 17,
+          "value": 0.7262524366378784
+        },
+        {
+          "step": 18,
+          "value": 0.7285643815994263
+        },
+        {
+          "step": 19,
+          "value": 0.7294865846633911
+        },
+        {
+          "step": 20,
+          "value": 0.7267336845397949
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.6647107601165771
+        },
+        {
+          "step": 2,
+          "value": 0.6775053143501282
+        },
+        {
+          "step": 3,
+          "value": 0.6860654354095459
+        },
+        {
+          "step": 4,
+          "value": 0.6885091662406921
+        },
+        {
+          "step": 5,
+          "value": 0.6891189813613892
+        },
+        {
+          "step": 6,
+          "value": 0.6927405595779419
+        },
+        {
+          "step": 7,
+          "value": 0.6918365359306335
+        },
+        {
+          "step": 8,
+          "value": 0.6912761330604553
+        },
+        {
+          "step": 9,
+          "value": 0.6985852718353271
+        },
+        {
+          "step": 10,
+          "value": 0.6959012746810913
+        },
+        {
+          "step": 11,
+          "value": 0.6968114972114563
+        },
+        {
+          "step": 12,
+          "value": 0.6966220140457153
+        },
+        {
+          "step": 13,
+          "value": 0.7000101804733276
+        },
+        {
+          "step": 14,
+          "value": 0.6969996690750122
+        },
+        {
+          "step": 15,
+          "value": 0.6959689259529114
+        },
+        {
+          "step": 16,
+          "value": 0.699392557144165
+        },
+        {
+          "step": 17,
+          "value": 0.7015499472618103
+        },
+        {
+          "step": 18,
+          "value": 0.7021254301071167
+        },
+        {
+          "step": 19,
+          "value": 0.7023726105690002
+        },
+        {
+          "step": 20,
+          "value": 0.7001345157623291
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.3402823805809021,
+        "step": 18
+      },
+      "best_pixel_val": {
+        "value": 0.7023726105690002,
+        "step": 19
+      },
+      "lowest_loss_val": {
+        "value": 1.0721561908721924,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.33369871973991394,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.7001345157623291,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.0721561908721924,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.44128933548927307,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7267336845397949,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 0.9287078380584717,
+        "step": 20
+      }
+    }
+  },
+  {
+    "layer": 32,
+    "image": "finalresults/pics/llava_val_vis_layer32.png",
+    "scalars": {
+      "Loss/train": [
+        {
+          "step": 1,
+          "value": 1.4818452596664429
+        },
+        {
+          "step": 2,
+          "value": 1.196874976158142
+        },
+        {
+          "step": 3,
+          "value": 1.1244791746139526
+        },
+        {
+          "step": 4,
+          "value": 1.085429072380066
+        },
+        {
+          "step": 5,
+          "value": 1.0552455186843872
+        },
+        {
+          "step": 6,
+          "value": 1.0299478769302368
+        },
+        {
+          "step": 7,
+          "value": 1.0140377283096313
+        },
+        {
+          "step": 8,
+          "value": 1.0017857551574707
+        },
+        {
+          "step": 9,
+          "value": 0.9884796738624573
+        },
+        {
+          "step": 10,
+          "value": 0.9842758178710938
+        },
+        {
+          "step": 11,
+          "value": 0.9725818634033203
+        },
+        {
+          "step": 12,
+          "value": 0.9608879089355469
+        },
+        {
+          "step": 13,
+          "value": 0.953125
+        },
+        {
+          "step": 14,
+          "value": 0.9440228343009949
+        },
+        {
+          "step": 15,
+          "value": 0.94370037317276
+        },
+        {
+          "step": 16,
+          "value": 0.9406126141548157
+        },
+        {
+          "step": 17,
+          "value": 0.9326884746551514
+        },
+        {
+          "step": 18,
+          "value": 0.9249380230903625
+        },
+        {
+          "step": 19,
+          "value": 0.9252976179122925
+        },
+        {
+          "step": 20,
+          "value": 0.9250124096870422
+        }
+      ],
+      "Loss/val": [
+        {
+          "step": 1,
+          "value": 1.274187445640564
+        },
+        {
+          "step": 2,
+          "value": 1.2179374694824219
+        },
+        {
+          "step": 3,
+          "value": 1.1655000448226929
+        },
+        {
+          "step": 4,
+          "value": 1.1396875381469727
+        },
+        {
+          "step": 5,
+          "value": 1.1385624408721924
+        },
+        {
+          "step": 6,
+          "value": 1.112375020980835
+        },
+        {
+          "step": 7,
+          "value": 1.1362500190734863
+        },
+        {
+          "step": 8,
+          "value": 1.0969375371932983
+        },
+        {
+          "step": 9,
+          "value": 1.1178125143051147
+        },
+        {
+          "step": 10,
+          "value": 1.0860625505447388
+        },
+        {
+          "step": 11,
+          "value": 1.0938750505447388
+        },
+        {
+          "step": 12,
+          "value": 1.100000023841858
+        },
+        {
+          "step": 13,
+          "value": 1.0775624513626099
+        },
+        {
+          "step": 14,
+          "value": 1.0963749885559082
+        },
+        {
+          "step": 15,
+          "value": 1.0726875066757202
+        },
+        {
+          "step": 16,
+          "value": 1.0871249437332153
+        },
+        {
+          "step": 17,
+          "value": 1.0820624828338623
+        },
+        {
+          "step": 18,
+          "value": 1.0809375047683716
+        },
+        {
+          "step": 19,
+          "value": 1.09556245803833
+        },
+        {
+          "step": 20,
+          "value": 1.061187505722046
+        }
+      ],
+      "mIoU/train": [
+        {
+          "step": 1,
+          "value": 0.30645766854286194
+        },
+        {
+          "step": 2,
+          "value": 0.33226364850997925
+        },
+        {
+          "step": 3,
+          "value": 0.3642359972000122
+        },
+        {
+          "step": 4,
+          "value": 0.37076500058174133
+        },
+        {
+          "step": 5,
+          "value": 0.39010223746299744
+        },
+        {
+          "step": 6,
+          "value": 0.39859437942504883
+        },
+        {
+          "step": 7,
+          "value": 0.39118120074272156
+        },
+        {
+          "step": 8,
+          "value": 0.4063745439052582
+        },
+        {
+          "step": 9,
+          "value": 0.41592907905578613
+        },
+        {
+          "step": 10,
+          "value": 0.41345375776290894
+        },
+        {
+          "step": 11,
+          "value": 0.4263838827610016
+        },
+        {
+          "step": 12,
+          "value": 0.42419785261154175
+        },
+        {
+          "step": 13,
+          "value": 0.434577077627182
+        },
+        {
+          "step": 14,
+          "value": 0.4293707311153412
+        },
+        {
+          "step": 15,
+          "value": 0.44307202100753784
+        },
+        {
+          "step": 16,
+          "value": 0.440819650888443
+        },
+        {
+          "step": 17,
+          "value": 0.4432545006275177
+        },
+        {
+          "step": 18,
+          "value": 0.44191741943359375
+        },
+        {
+          "step": 19,
+          "value": 0.44449666142463684
+        },
+        {
+          "step": 20,
+          "value": 0.4503094553947449
+        }
+      ],
+      "mIoU/val": [
+        {
+          "step": 1,
+          "value": 0.2814769148826599
+        },
+        {
+          "step": 2,
+          "value": 0.2909933030605316
+        },
+        {
+          "step": 3,
+          "value": 0.3120095431804657
+        },
+        {
+          "step": 4,
+          "value": 0.314181923866272
+        },
+        {
+          "step": 5,
+          "value": 0.3220064342021942
+        },
+        {
+          "step": 6,
+          "value": 0.3236718475818634
+        },
+        {
+          "step": 7,
+          "value": 0.31599417328834534
+        },
+        {
+          "step": 8,
+          "value": 0.32465261220932007
+        },
+        {
+          "step": 9,
+          "value": 0.3301979899406433
+        },
+        {
+          "step": 10,
+          "value": 0.3273884654045105
+        },
+        {
+          "step": 11,
+          "value": 0.33794257044792175
+        },
+        {
+          "step": 12,
+          "value": 0.3325398564338684
+        },
+        {
+          "step": 13,
+          "value": 0.3327183127403259
+        },
+        {
+          "step": 14,
+          "value": 0.3304639160633087
+        },
+        {
+          "step": 15,
+          "value": 0.34439194202423096
+        },
+        {
+          "step": 16,
+          "value": 0.3360762894153595
+        },
+        {
+          "step": 17,
+          "value": 0.3382924497127533
+        },
+        {
+          "step": 18,
+          "value": 0.3338286280632019
+        },
+        {
+          "step": 19,
+          "value": 0.33354344964027405
+        },
+        {
+          "step": 20,
+          "value": 0.3411375880241394
+        }
+      ],
+      "PixelAcc/train": [
+        {
+          "step": 1,
+          "value": 0.676125705242157
+        },
+        {
+          "step": 2,
+          "value": 0.6824812889099121
+        },
+        {
+          "step": 3,
+          "value": 0.7022995352745056
+        },
+        {
+          "step": 4,
+          "value": 0.7067976593971252
+        },
+        {
+          "step": 5,
+          "value": 0.7063711285591125
+        },
+        {
+          "step": 6,
+          "value": 0.7157304883003235
+        },
+        {
+          "step": 7,
+          "value": 0.7073703408241272
+        },
+        {
+          "step": 8,
+          "value": 0.7169591784477234
+        },
+        {
+          "step": 9,
+          "value": 0.7146733403205872
+        },
+        {
+          "step": 10,
+          "value": 0.720389187335968
+        },
+        {
+          "step": 11,
+          "value": 0.7189748287200928
+        },
+        {
+          "step": 12,
+          "value": 0.7188829779624939
+        },
+        {
+          "step": 13,
+          "value": 0.7244072556495667
+        },
+        {
+          "step": 14,
+          "value": 0.7240549921989441
+        },
+        {
+          "step": 15,
+          "value": 0.7259191274642944
+        },
+        {
+          "step": 16,
+          "value": 0.7223515510559082
+        },
+        {
+          "step": 17,
+          "value": 0.7224624752998352
+        },
+        {
+          "step": 18,
+          "value": 0.7273774147033691
+        },
+        {
+          "step": 19,
+          "value": 0.7271809577941895
+        },
+        {
+          "step": 20,
+          "value": 0.7303326725959778
+        }
+      ],
+      "PixelAcc/val": [
+        {
+          "step": 1,
+          "value": 0.67094486951828
+        },
+        {
+          "step": 2,
+          "value": 0.672091007232666
+        },
+        {
+          "step": 3,
+          "value": 0.6880047917366028
+        },
+        {
+          "step": 4,
+          "value": 0.6913209557533264
+        },
+        {
+          "step": 5,
+          "value": 0.6888163089752197
+        },
+        {
+          "step": 6,
+          "value": 0.6942729353904724
+        },
+        {
+          "step": 7,
+          "value": 0.6883246302604675
+        },
+        {
+          "step": 8,
+          "value": 0.6984785795211792
+        },
+        {
+          "step": 9,
+          "value": 0.6933080554008484
+        },
+        {
+          "step": 10,
+          "value": 0.6992663145065308
+        },
+        {
+          "step": 11,
+          "value": 0.6945380568504333
+        },
+        {
+          "step": 12,
+          "value": 0.6960247159004211
+        },
+        {
+          "step": 13,
+          "value": 0.7000607848167419
+        },
+        {
+          "step": 14,
+          "value": 0.6980561017990112
+        },
+        {
+          "step": 15,
+          "value": 0.7008899450302124
+        },
+        {
+          "step": 16,
+          "value": 0.6947742104530334
+        },
+        {
+          "step": 17,
+          "value": 0.6966158747673035
+        },
+        {
+          "step": 18,
+          "value": 0.6995522975921631
+        },
+        {
+          "step": 19,
+          "value": 0.696878969669342
+        },
+        {
+          "step": 20,
+          "value": 0.7030154466629028
+        }
+      ]
+    },
+    "summary": {
+      "best_mIoU_val": {
+        "value": 0.34439194202423096,
+        "step": 15
+      },
+      "best_pixel_val": {
+        "value": 0.7030154466629028,
+        "step": 20
+      },
+      "lowest_loss_val": {
+        "value": 1.061187505722046,
+        "step": 20
+      },
+      "final_mIoU_val": {
+        "value": 0.3411375880241394,
+        "step": 20
+      },
+      "final_pixel_val": {
+        "value": 0.7030154466629028,
+        "step": 20
+      },
+      "final_loss_val": {
+        "value": 1.061187505722046,
+        "step": 20
+      },
+      "final_mIoU_train": {
+        "value": 0.4503094553947449,
+        "step": 20
+      },
+      "final_pixel_train": {
+        "value": 0.7303326725959778,
+        "step": 20
+      },
+      "final_loss_train": {
+        "value": 0.9250124096870422,
+        "step": 20
+      }
+    }
+  }
+]</script>
+  <div class="lightbox" aria-hidden="true">
+    <button type="button" class="lightbox-close" aria-label="Close image">&times;</button>
+    <img src="" alt="" />
+  </div>
+  <script>
+    const progressBar = document.querySelector('.progress-bar');
+    const updateProgress = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      progressBar.style.width = `${progress}%`;
+    };
+
+    document.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    document.querySelectorAll('.collapsible-log').forEach((log) => {
+      const toggle = log.querySelector('.toggle-log');
+      if (!toggle) return;
+      toggle.addEventListener('click', () => {
+        const expanded = log.classList.toggle('expanded');
+        toggle.textContent = expanded ? 'Collapse log' : 'Expand log';
+      });
+    });
+
+    const lightbox = document.querySelector('.lightbox');
+    const lightboxImg = lightbox.querySelector('img');
+    const closeBtn = lightbox.querySelector('.lightbox-close');
+
+    const closeLightbox = () => {
+      lightbox.classList.remove('open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      lightboxImg.src = '';
+      lightboxImg.alt = '';
+    };
+
+    const openLightbox = (src, alt) => {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt || '';
+      lightbox.classList.add('open');
+      lightbox.setAttribute('aria-hidden', 'false');
+    };
+
+    document.querySelectorAll('.viz.zoomable img').forEach((img) => {
+      img.addEventListener('click', () => openLightbox(img.getAttribute('src'), img.getAttribute('alt')));
+    });
+
+    closeBtn.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (event) => {
+      if (event.target === lightbox) {
+        closeLightbox();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && lightbox.classList.contains('open')) {
+        closeLightbox();
+      }
+    });
+
+    const layerDataElement = document.getElementById('layer-data');
+    if (layerDataElement) {
+      try {
+        const parsedLayers = JSON.parse(layerDataElement.textContent || '[]');
+        initLayerExplorer(parsedLayers);
+      } catch (error) {
+        console.error('Unable to parse layer data', error);
+      }
+    }
+
+    function initLayerExplorer(data) {
+      if (!Array.isArray(data) || !data.length) {
+        const info = document.getElementById('layer-info');
+        if (info) {
+          info.innerHTML = '<p>Layer metrics were not found.</p>';
+        }
+        return;
+      }
+
+      const track = document.getElementById('layer-track');
+      const infoPanel = document.getElementById('layer-info');
+      const tableBody = document.querySelector('#layer-table tbody');
+      if (!track || !infoPanel || !tableBody) {
+        return;
+      }
+
+      const sortedData = [...data].sort((a, b) => a.layer - b.layer);
+      const nodeMap = new Map();
+
+      sortedData.forEach((entry) => {
+        const node = document.createElement('button');
+        node.type = 'button';
+        node.className = 'layer-node';
+        node.textContent = `L${entry.layer}`;
+        node.dataset.layer = entry.layer;
+        node.addEventListener('click', () => selectLayer(entry.layer));
+        track.appendChild(node);
+        nodeMap.set(entry.layer, node);
+      });
+
+      buildLayerSummaryTable(sortedData, tableBody);
+
+      const bestLayer = sortedData.reduce((best, layer) => {
+        const current = layer.summary?.best_mIoU_val?.value ?? -Infinity;
+        const top = best.summary?.best_mIoU_val?.value ?? -Infinity;
+        return current > top ? layer : best;
+      }, sortedData[0]);
+
+      selectLayer(bestLayer.layer);
+
+      function selectLayer(layerNumber) {
+        const target = sortedData.find((item) => item.layer === layerNumber);
+        if (!target) {
+          return;
+        }
+        nodeMap.forEach((node) => node.classList.remove('is-active'));
+        const activeNode = nodeMap.get(layerNumber);
+        if (activeNode) {
+          activeNode.classList.add('is-active');
+        }
+        renderLayerDetail(infoPanel, target);
+      }
+    }
+
+    function renderLayerDetail(container, layerData) {
+      const summary = layerData.summary || {};
+      const cards = [
+        {
+          label: 'Best mIoU (val)',
+          value: summary.best_mIoU_val?.value,
+          meta: summary.best_mIoU_val ? `Step ${summary.best_mIoU_val.step}` : '—',
+        },
+        {
+          label: 'Best Pixel Acc (val)',
+          value: summary.best_pixel_val?.value,
+          meta: summary.best_pixel_val ? `Step ${summary.best_pixel_val.step}` : '—',
+        },
+        {
+          label: 'Lowest Loss (val)',
+          value: summary.lowest_loss_val?.value,
+          meta: summary.lowest_loss_val ? `Step ${summary.lowest_loss_val.step}` : '—',
+        },
+      ];
+
+      const imageMarkup = layerData.image
+        ? `<figure class="viz zoomable diagram-image">
+            <img src="${layerData.image}" alt="Layer ${layerData.layer} validation render" />
+          </figure>`
+        : '<p>No visualization provided for this layer.</p>';
+
+      const chartCards = [
+        {
+          key: 'loss',
+          title: 'Loss trajectory',
+          trainTag: 'Loss/train',
+          valTag: 'Loss/val',
+        },
+        {
+          key: 'miou',
+          title: 'mIoU trajectory',
+          trainTag: 'mIoU/train',
+          valTag: 'mIoU/val',
+        },
+        {
+          key: 'pixel',
+          title: 'Pixel accuracy trajectory',
+          trainTag: 'PixelAcc/train',
+          valTag: 'PixelAcc/val',
+        },
+      ];
+
+      const logCards = chartCards;
+
+      container.innerHTML = `
+        <div class="layer-header">
+          <div>
+            <p class="layer-label">Layer ${layerData.layer}</p>
+            <h3>Llava 1.5 · ADE20K linear probe</h3>
+            <p class="layer-subtext">Segmentation-only linear probe using image tokens.</p>
+          </div>
+          <div class="layer-step-tags">
+            ${summary.best_mIoU_val ? `<span>mIoU↑ step ${summary.best_mIoU_val.step}</span>` : ''}
+            ${summary.best_pixel_val ? `<span>Pixel↑ step ${summary.best_pixel_val.step}</span>` : ''}
+            ${summary.lowest_loss_val ? `<span>Loss↓ step ${summary.lowest_loss_val.step}</span>` : ''}
+          </div>
+        </div>
+        <div class="metric-cards">
+          ${cards
+            .map(
+              (card) => `
+              <article class="metric-card">
+                <span class="metric-label">${card.label}</span>
+                <span class="metric-value">${formatMetricValue(card.value)}</span>
+                <span class="metric-meta">${card.meta}</span>
+              </article>
+            `
+            )
+            .join('')}
+        </div>
+        <div class="layer-visuals">
+          ${imageMarkup}
+        </div>
+        <div class="chart-grid">
+          ${chartCards
+            .map(
+              (chart) => `
+                <div class="chart-card" data-chart="${chart.key}">
+                  <div class="chart-title">${chart.title}</div>
+                  <canvas data-train="${chart.trainTag}" data-val="${chart.valTag}"></canvas>
+                  <small>Train vs validation</small>
+                </div>
+              `
+            )
+            .join('')}
+        </div>
+        <div class="log-grid">
+          ${logCards
+            .map(
+              (chart) => `
+                <details class="log-card">
+                  <summary>${chart.title} · full scalar log</summary>
+                  ${buildLogTable(layerData, chart.trainTag, chart.valTag)}
+                </details>
+              `
+            )
+            .join('')}
+        </div>
+      `;
+
+      container.querySelectorAll('.viz.zoomable img').forEach((img) => {
+        img.addEventListener('click', () => openLightbox(img.getAttribute('src'), img.getAttribute('alt')));
+      });
+
+      container.querySelectorAll('canvas').forEach((canvas) => {
+        const trainTag = canvas.dataset.train;
+        const valTag = canvas.dataset.val;
+        const trainSeries = layerData.scalars?.[trainTag] || [];
+        const valSeries = layerData.scalars?.[valTag] || [];
+        drawMiniChart(canvas, [
+          { label: 'train', color: '#6ee7ff', data: trainSeries },
+          { label: 'val', color: '#c084fc', data: valSeries },
+        ]);
+      });
+    }
+
+    function buildLogTable(layerData, trainTag, valTag) {
+      const train = layerData.scalars?.[trainTag] || [];
+      const val = layerData.scalars?.[valTag] || [];
+      const stepSet = new Set();
+      train.forEach((item) => stepSet.add(item.step));
+      val.forEach((item) => stepSet.add(item.step));
+      const steps = Array.from(stepSet).sort((a, b) => a - b);
+      const trainMap = new Map(train.map((item) => [item.step, item.value]));
+      const valMap = new Map(val.map((item) => [item.step, item.value]));
+
+      const rows = steps
+        .map(
+          (step) => `
+            <tr>
+              <td>${step}</td>
+              <td>${formatMetricValue(trainMap.get(step))}</td>
+              <td>${formatMetricValue(valMap.get(step))}</td>
+            </tr>
+          `
+        )
+        .join('');
+
+      return `
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Train</th>
+                <th>Val</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function drawMiniChart(canvas, seriesList) {
+      const context = canvas.getContext('2d');
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      context.scale(ratio, ratio);
+      context.clearRect(0, 0, width, height);
+
+      const allValues = seriesList.flatMap((serie) => serie.data.map((point) => point.value));
+      if (!allValues.length) {
+        context.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        context.font = '12px Inter, sans-serif';
+        context.fillText('No data', 10, height / 2);
+        return;
+      }
+
+      const min = Math.min(...allValues);
+      const max = Math.max(...allValues);
+      const padding = 8;
+      const valueRange = max - min || 1;
+
+      context.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(padding, height - padding);
+      context.lineTo(width - padding, height - padding);
+      context.stroke();
+
+      seriesList.forEach((serie) => {
+        if (!serie.data.length) {
+          return;
+        }
+        context.strokeStyle = serie.color;
+        context.lineWidth = 2;
+        context.beginPath();
+        serie.data.forEach((point, index) => {
+          const x = padding + ((width - padding * 2) * index) / (serie.data.length - 1 || 1);
+          const normalized = (point.value - min) / valueRange;
+          const y = height - padding - normalized * (height - padding * 2);
+          if (index === 0) {
+            context.moveTo(x, y);
+          } else {
+            context.lineTo(x, y);
+          }
+        });
+        context.stroke();
+      });
+    }
+
+    function buildLayerSummaryTable(data, tbody) {
+      const rows = data
+        .map((layer) => {
+          const bestMiou = layer.summary?.best_mIoU_val;
+          const bestPixel = layer.summary?.best_pixel_val;
+          const lowestLoss = layer.summary?.lowest_loss_val;
+          return `
+            <tr>
+              <td>L${layer.layer}</td>
+              <td>${formatMetricValue(bestMiou?.value)}</td>
+              <td>${bestMiou ? bestMiou.step : '—'}</td>
+              <td>${formatMetricValue(bestPixel?.value)}</td>
+              <td>${bestPixel ? bestPixel.step : '—'}</td>
+              <td>${formatMetricValue(lowestLoss?.value)}</td>
+              <td>${lowestLoss ? lowestLoss.step : '—'}</td>
+            </tr>
+          `;
+        })
+        .join('');
+      tbody.innerHTML = rows;
+    }
+
+    function formatMetricValue(value) {
+      if (typeof value !== 'number' || Number.isNaN(value)) {
+        return '—';
+      }
+      return value.toFixed(3);
+    }
+  </script>
+</body>
+</html>
