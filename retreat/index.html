@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talent Investor | Candidate Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c1220;
+      --panel: rgba(17, 26, 43, 0.85);
+      --card: rgba(18, 25, 38, 0.85);
+      --stroke: rgba(255, 255, 255, 0.08);
+      --muted: #9fb0c7;
+      --text: #e8edf7;
+      --accent: #7ef7d4;
+      --accent-strong: #45d1ff;
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --gap: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(140% 120% at 10% 20%, rgba(69, 209, 255, 0.18), transparent),
+                  radial-gradient(120% 100% at 90% 10%, rgba(126, 247, 212, 0.16), transparent),
+                  var(--bg);
+      color: var(--text);
+      font-family: "Space Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--accent-strong);
+      text-decoration: underline;
+    }
+
+    .page {
+      max-width: 1300px;
+      margin: 0 auto 60px auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(69, 209, 255, 0.16), rgba(126, 247, 212, 0.08));
+      border: 1px solid var(--stroke);
+      border-radius: calc(var(--radius) + 4px);
+      padding: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(220px 180px at 90% 20%, rgba(69, 209, 255, 0.18), transparent);
+      pointer-events: none;
+    }
+
+    .hero-text {
+      flex: 1 1 480px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 6px 0;
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: clamp(26px, 4vw, 34px);
+      letter-spacing: -0.5px;
+    }
+
+    .lead {
+      margin: 0 0 16px 0;
+      color: var(--muted);
+      max-width: 680px;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .hero-actions {
+      min-width: 280px;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .search {
+      position: relative;
+    }
+
+    .search input {
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text);
+      font-size: 15px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    .search svg {
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      width: 18px;
+      height: 18px;
+      stroke: var(--muted);
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #0a1220;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      box-shadow: var(--shadow);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 30px rgba(69, 209, 255, 0.25);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid var(--stroke);
+      box-shadow: none;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 16px;
+      margin-top: 22px;
+      align-items: start;
+    }
+
+    .filters {
+      position: sticky;
+      top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .filters h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+    }
+
+    .filter-group {
+      margin-bottom: 12px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    select,
+    .filters input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--stroke);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .results {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .active-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 30px;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip button {
+      background: transparent;
+      color: var(--text);
+      box-shadow: none;
+      border: none;
+      padding: 0;
+      font-size: 14px;
+      transform: none;
+      cursor: pointer;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      animation: floatIn 220ms ease;
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(126, 247, 212, 0.35), rgba(69, 209, 255, 0.25));
+      display: grid;
+      place-items: center;
+      color: #0c1220;
+      font-weight: 700;
+      font-size: 20px;
+      overflow: hidden;
+      border: 1px solid var(--stroke);
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .headline {
+      margin: 2px 0 4px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .role {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--stroke);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    .contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .contact a {
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--stroke);
+      background: rgba(255, 255, 255, 0.04);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(69, 209, 255, 0.12);
+      border: 1px solid rgba(69, 209, 255, 0.35);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 18, 32, 0.75);
+      display: grid;
+      place-items: center;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .small-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .filters {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      .hero {
+        padding: 18px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">Talent radar</p>
+        <h1>Filter and reach the best candidates instantly</h1>
+        <p class="lead">Pulls every profile JSON in <code>profiles/</code>, surfaces the most relevant signals, and lets you filter by fit, seniority, location, and reachability.</p>
+        <div class="hero-stats">
+          <div class="stat">
+            <strong id="stat-total">--</strong>
+            <span>Profiles loaded</span>
+          </div>
+          <div class="stat">
+            <strong id="stat-matching">--</strong>
+            <span>Matching filters</span>
+          </div>
+          <div class="stat">
+            <strong id="stat-reachable">--</strong>
+            <span>Reachable (email)</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+          </svg>
+          <input id="searchInput" type="search" placeholder="Search by name, headline, skill, company..." autocomplete="off">
+        </div>
+        <div class="actions-row">
+          <button id="reloadBtn" type="button">Reload profiles</button>
+          <button id="clearBtn" class="secondary" type="button">Clear filters</button>
+        </div>
+        <div class="small-label">Tip: combine search + filters for quick shortlists.</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="filters">
+        <h3>Filters</h3>
+        <div class="filter-group">
+          <label for="locationSelect">Location</label>
+          <select id="locationSelect">
+            <option value="">Anywhere</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="industrySelect">Industry</label>
+          <select id="industrySelect">
+            <option value="">Any industry</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="departmentSelect">Department</label>
+          <select id="departmentSelect">
+            <option value="">Any department</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="levelSelect">Management level</label>
+          <select id="levelSelect">
+            <option value="">Any level</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="experienceSelect">Experience</label>
+          <select id="experienceSelect">
+            <option value="any">Any</option>
+            <option value="0-3">0-3 years</option>
+            <option value="3-5">3-5 years</option>
+            <option value="5-10">5-10 years</option>
+            <option value="10+">10+ years</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="checkbox-row">
+            <input type="checkbox" id="decisionCheckbox">
+            <label for="decisionCheckbox">Decision maker / founder</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="workingCheckbox">
+            <label for="workingCheckbox">Currently working</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="emailCheckbox">
+            <label for="emailCheckbox">Has email</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="linkedinCheckbox">
+            <label for="linkedinCheckbox">Has LinkedIn</label>
+          </div>
+        </div>
+      </aside>
+
+      <section class="results">
+        <div class="toolbar">
+          <div class="active-filters" id="activeFilters"></div>
+          <div>
+            <label for="sortSelect" class="small-label">Sort by</label>
+            <select id="sortSelect">
+              <option value="recent">Recently updated</option>
+              <option value="experience">Experience (years)</option>
+              <option value="connections">Connections</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+        </div>
+        <div id="cards" class="cards"></div>
+        <div id="emptyState" class="empty hidden">No profiles match these filters.</div>
+      </section>
+    </main>
+  </div>
+
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    const fallbackProfileFiles = [
+      "123450517.json",
+      "182450477.json",
+      "190894986.json",
+      "283785830.json",
+      "285920376.json",
+      "339347205.json",
+      "367366050.json",
+      "390844397.json",
+      "410576945.json",
+      "442057343.json",
+      "455813315.json",
+      "463558147.json",
+      "465623413.json",
+      "469195892.json",
+      "472612889.json",
+      "477527331.json",
+      "480201964.json",
+      "480210905.json",
+      "480553335.json",
+      "483707143.json",
+      "486041133.json",
+      "488242071.json",
+      "499469735.json",
+      "508555026.json",
+      "512264033.json",
+      "513705407.json",
+      "516955113.json",
+      "535402410.json",
+      "587184359.json",
+      "587693549.json",
+      "591770645.json",
+      "593499748.json",
+      "610304207.json",
+      "615470328.json",
+      "645313620.json",
+      "654483673.json",
+      "658796829.json",
+      "663500747.json",
+      "668132403.json",
+      "674103240.json",
+      "720862139.json",
+      "749350016.json",
+      "753929818.json",
+      "757044043.json",
+      "770695542.json",
+      "806739764.json",
+      "839821657.json",
+      "840517859.json",
+      "859780708.json",
+      "863297842.json"
+    ];
+
+    const state = {
+      query: "",
+      location: "",
+      industry: "",
+      department: "",
+      level: "",
+      experience: "any",
+      decisionMaker: false,
+      working: false,
+      email: false,
+      linkedin: false,
+      sort: "recent"
+    };
+
+    let profiles = [];
+
+    const dom = {
+      searchInput: document.getElementById("searchInput"),
+      locationSelect: document.getElementById("locationSelect"),
+      industrySelect: document.getElementById("industrySelect"),
+      departmentSelect: document.getElementById("departmentSelect"),
+      levelSelect: document.getElementById("levelSelect"),
+      experienceSelect: document.getElementById("experienceSelect"),
+      decisionCheckbox: document.getElementById("decisionCheckbox"),
+      workingCheckbox: document.getElementById("workingCheckbox"),
+      emailCheckbox: document.getElementById("emailCheckbox"),
+      linkedinCheckbox: document.getElementById("linkedinCheckbox"),
+      sortSelect: document.getElementById("sortSelect"),
+      cards: document.getElementById("cards"),
+      activeFilters: document.getElementById("activeFilters"),
+      emptyState: document.getElementById("emptyState"),
+      totalStat: document.getElementById("stat-total"),
+      matchingStat: document.getElementById("stat-matching"),
+      reachableStat: document.getElementById("stat-reachable"),
+      loading: document.getElementById("loading"),
+      reloadBtn: document.getElementById("reloadBtn"),
+      clearBtn: document.getElementById("clearBtn")
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      bindControls();
+      loadProfiles();
+    });
+
+    function bindControls() {
+      dom.searchInput.addEventListener("input", (e) => {
+        state.query = e.target.value.trim().toLowerCase();
+        render();
+      });
+
+      dom.locationSelect.addEventListener("change", (e) => {
+        state.location = e.target.value;
+        render();
+      });
+
+      dom.industrySelect.addEventListener("change", (e) => {
+        state.industry = e.target.value;
+        render();
+      });
+
+      dom.departmentSelect.addEventListener("change", (e) => {
+        state.department = e.target.value;
+        render();
+      });
+
+      dom.levelSelect.addEventListener("change", (e) => {
+        state.level = e.target.value;
+        render();
+      });
+
+      dom.experienceSelect.addEventListener("change", (e) => {
+        state.experience = e.target.value;
+        render();
+      });
+
+      dom.decisionCheckbox.addEventListener("change", (e) => {
+        state.decisionMaker = e.target.checked;
+        render();
+      });
+
+      dom.workingCheckbox.addEventListener("change", (e) => {
+        state.working = e.target.checked;
+        render();
+      });
+
+      dom.emailCheckbox.addEventListener("change", (e) => {
+        state.email = e.target.checked;
+        render();
+      });
+
+      dom.linkedinCheckbox.addEventListener("change", (e) => {
+        state.linkedin = e.target.checked;
+        render();
+      });
+
+      dom.sortSelect.addEventListener("change", (e) => {
+        state.sort = e.target.value;
+        render();
+      });
+
+      dom.reloadBtn.addEventListener("click", () => loadProfiles(true));
+      dom.clearBtn.addEventListener("click", clearFilters);
+    }
+
+    function clearFilters() {
+      state.query = "";
+      state.location = "";
+      state.industry = "";
+      state.department = "";
+      state.level = "";
+      state.experience = "any";
+      state.decisionMaker = false;
+      state.working = false;
+      state.email = false;
+      state.linkedin = false;
+      state.sort = "recent";
+      dom.searchInput.value = "";
+      dom.locationSelect.value = "";
+      dom.industrySelect.value = "";
+      dom.departmentSelect.value = "";
+      dom.levelSelect.value = "";
+      dom.experienceSelect.value = "any";
+      dom.decisionCheckbox.checked = false;
+      dom.workingCheckbox.checked = false;
+      dom.emailCheckbox.checked = false;
+      dom.linkedinCheckbox.checked = false;
+      dom.sortSelect.value = "recent";
+      render();
+    }
+
+    function toggleLoading(show) {
+      dom.loading.classList.toggle("hidden", !show);
+    }
+
+    async function loadProfiles(force = false) {
+      toggleLoading(true);
+      const files = await discoverProfileFiles(force);
+      const loaded = [];
+
+      await Promise.all(
+        files.map(async (file) => {
+          try {
+            const res = await fetch(`profiles/${file}`);
+            if (!res.ok) throw new Error(`Bad response ${res.status}`);
+            const data = await res.json();
+            loaded.push(normalizeProfile(data, file));
+          } catch (err) {
+            console.warn(`Could not load ${file}`, err);
+          }
+        })
+      );
+
+      profiles = loaded;
+      hydrateFilterOptions(loaded);
+      render();
+      toggleLoading(false);
+    }
+
+    async function discoverProfileFiles(force = false) {
+      const files = new Set(fallbackProfileFiles);
+
+      try {
+        const res = await fetch("profiles/manifest.json", { cache: force ? "reload" : "default" });
+        if (res.ok) {
+          const list = await res.json();
+          list.forEach((f) => files.add(f.replace(/^\.\//, "").replace(/^profiles\//, "")));
+        }
+      } catch (err) {
+        console.warn("manifest.json not found, falling back to directory listing.", err);
+      }
+
+      // Try to parse directory listing if the host exposes it.
+      try {
+        const res = await fetch("profiles/");
+        if (res.ok) {
+          const text = await res.text();
+          const matches = [...text.matchAll(/href=\"([^\"]+\\.json)\"/gi)];
+          matches.forEach((m) => {
+            const file = m[1].split("/").pop();
+            if (file) files.add(file);
+          });
+        }
+      } catch (err) {
+        console.warn("Directory listing lookup failed, using fallback list.", err);
+      }
+
+      return [...files].sort();
+    }
+
+    function normalizeProfile(profile, fileName) {
+      const experiences = Array.isArray(profile.experience) ? profile.experience : [];
+      const activeExp = experiences.find((e) => e.active_experience) || experiences[0] || {};
+      const industries = Array.from(
+        new Set(
+          experiences
+            .map((e) => e.company_industry)
+            .filter(Boolean)
+            .map((str) => String(str))
+        )
+      );
+      const departments = Array.from(
+        new Set(
+          experiences
+            .map((e) => e.department)
+            .filter(Boolean)
+            .map((str) => String(str))
+        )
+      );
+      const levels = Array.from(
+        new Set(
+          experiences
+            .map((e) => e.management_level)
+            .filter(Boolean)
+            .map((str) => String(str))
+        )
+      );
+      const degrees = (profile.education || [])
+        .map((e) => e.degree)
+        .filter(Boolean)
+        .map((str) => String(str));
+      const skills = Array.from(
+        new Set([...(profile.inferred_skills || []), ...(profile.historical_skills || [])].map((s) => String(s)))
+      );
+      const emails = (profile.professional_emails_collection || [])
+        .map((e) => e.professional_email)
+        .filter(Boolean);
+      const primaryEmail = profile.primary_professional_email || emails[0] || "";
+
+      return {
+        id: profile.id,
+        fileName,
+        fullName: profile.full_name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Unknown",
+        headline: profile.headline || "",
+        summary: profile.summary || "",
+        location: profile.location_full || [profile.location_city, profile.location_country].filter(Boolean).join(", "),
+        country: profile.location_country || "",
+        regions: profile.location_regions || [],
+        linkedin: profile.linkedin_url || "",
+        picture: profile.picture_url || "",
+        industries,
+        departments: [profile.active_experience_department, ...departments].filter(Boolean),
+        levels: [profile.active_experience_management_level, ...levels].filter(Boolean),
+        skills,
+        degrees,
+        isDecisionMaker: Boolean(profile.is_decision_maker),
+        isWorking: Boolean(profile.is_working),
+        connections: Number(profile.connections_count) || 0,
+        followers: Number(profile.followers_count) || 0,
+        totalMonths: Number(profile.total_experience_duration_months) || 0,
+        updatedAt: profile.updated_at || profile.changed_at || profile.checked_at || "",
+        primaryEmail,
+        emails,
+        activity: (profile.activity || []).slice(0, 3),
+        activeRole: {
+          title: profile.active_experience_title || activeExp.position_title || "",
+          company: activeExp.company_name || "",
+          location: activeExp.location || "",
+          industry: activeExp.company_industry || industries[0] || "",
+          size: activeExp.company_size_range || "",
+          website: activeExp.company_website || "",
+          companyLinkedin: activeExp.company_linkedin_url || ""
+        }
+      };
+    }
+
+    function hydrateFilterOptions(list) {
+      const locations = new Set();
+      const industries = new Set();
+      const departments = new Set();
+      const levels = new Set();
+
+      list.forEach((p) => {
+        if (p.country) locations.add(p.country);
+        p.industries.forEach((i) => industries.add(i));
+        p.departments.forEach((d) => departments.add(d));
+        p.levels.forEach((l) => levels.add(l));
+      });
+
+      setSelectOptions(dom.locationSelect, [...locations].sort(), "Anywhere");
+      setSelectOptions(dom.industrySelect, [...industries].sort(), "Any industry");
+      setSelectOptions(dom.departmentSelect, [...departments].sort(), "Any department");
+      setSelectOptions(dom.levelSelect, [...levels].sort(), "Any level");
+    }
+
+    function setSelectOptions(select, options, defaultLabel) {
+      const current = select.value;
+      select.innerHTML = "";
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = defaultLabel;
+      select.append(blank);
+      options.forEach((opt) => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        select.append(o);
+      });
+      if (options.includes(current)) {
+        select.value = current;
+      }
+    }
+
+    function render() {
+      const filtered = applyFilters(profiles);
+      updateStats(profiles.length, filtered);
+      renderActiveFilters();
+      renderCards(filtered);
+    }
+
+    function applyFilters(list) {
+      const queryTokens = state.query ? state.query.split(/\s+/).filter(Boolean) : [];
+
+      let result = list.filter((p) => {
+        if (state.location && p.country !== state.location) return false;
+        if (state.industry && !p.industries.includes(state.industry)) return false;
+        if (state.department && !p.departments.includes(state.department)) return false;
+        if (state.level && !p.levels.includes(state.level)) return false;
+
+        if (state.decisionMaker && !p.isDecisionMaker) return false;
+        if (state.working && !p.isWorking) return false;
+        if (state.email && !p.primaryEmail) return false;
+        if (state.linkedin && !p.linkedin) return false;
+
+        if (state.experience !== "any") {
+          const years = p.totalMonths / 12;
+          if (state.experience === "0-3" && !(years >= 0 && years <= 3)) return false;
+          if (state.experience === "3-5" && !(years >= 3 && years < 5)) return false;
+          if (state.experience === "5-10" && !(years >= 5 && years < 10)) return false;
+          if (state.experience === "10+" && !(years >= 10)) return false;
+        }
+
+        if (queryTokens.length) {
+          const haystack = [
+            p.fullName,
+            p.headline,
+            p.summary,
+            p.location,
+            p.activeRole.title,
+            p.activeRole.company,
+            p.industries.join(" "),
+            p.skills.join(" "),
+            p.degrees.join(" ")
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          const matches = queryTokens.every((token) => haystack.includes(token));
+          if (!matches) return false;
+        }
+
+        return true;
+      });
+
+      result = result.sort((a, b) => {
+        if (state.sort === "experience") {
+          return (b.totalMonths || 0) - (a.totalMonths || 0);
+        }
+        if (state.sort === "connections") {
+          return (b.connections || 0) - (a.connections || 0);
+        }
+        if (state.sort === "name") {
+          return a.fullName.localeCompare(b.fullName);
+        }
+        // default to recent
+        const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      return result;
+    }
+
+    function renderCards(list) {
+      dom.cards.innerHTML = "";
+      if (!list.length) {
+        dom.emptyState.classList.remove("hidden");
+        return;
+      }
+      dom.emptyState.classList.add("hidden");
+
+      const frag = document.createDocumentFragment();
+
+      list.forEach((p) => {
+        const card = document.createElement("article");
+        card.className = "card";
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        if (p.picture) {
+          const img = document.createElement("img");
+          img.src = p.picture;
+          img.alt = `${p.fullName} picture`;
+          avatar.append(img);
+        } else {
+          avatar.textContent = p.fullName.substring(0, 1).toUpperCase();
+        }
+
+        const titleWrap = document.createElement("div");
+        const nameEl = document.createElement("h3");
+        nameEl.style.margin = "0";
+        nameEl.textContent = p.fullName;
+        const headlineEl = document.createElement("p");
+        headlineEl.className = "headline";
+        headlineEl.textContent = p.headline || "No headline yet.";
+
+        titleWrap.append(nameEl, headlineEl);
+        header.append(avatar, titleWrap);
+
+        const role = document.createElement("div");
+        role.className = "role";
+        const rolePieces = [p.activeRole.title, p.activeRole.company].filter(Boolean).join(" @ ");
+        role.textContent = rolePieces || "No active role listed";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        if (p.location) meta.append(buildMeta("📍", p.location));
+        const years = p.totalMonths ? Math.round((p.totalMonths / 12) * 10) / 10 : null;
+        if (years !== null) meta.append(buildMeta("⏳", `${years} yrs`));
+        if (p.levels[0]) meta.append(buildMeta("🎯", p.levels[0]));
+        if (p.activeRole.industry) meta.append(buildMeta("🏷️", p.activeRole.industry));
+        if (p.isDecisionMaker) meta.append(badge("Decision maker"));
+        if (p.activeRole.size) meta.append(buildMeta("👥", p.activeRole.size));
+
+        const tagRow = document.createElement("div");
+        tagRow.className = "tag-row";
+        p.skills.slice(0, 6).forEach((skill) => tagRow.append(tag(skill)));
+        p.industries.slice(0, 2).forEach((ind) => tagRow.append(tag(ind)));
+
+        const education = document.createElement("div");
+        education.className = "meta";
+        if (p.degrees.length) {
+          education.append(buildMeta("🎓", p.degrees.slice(0, 2).join(" • ")));
+        }
+
+        const contact = document.createElement("div");
+        contact.className = "contact";
+        if (p.linkedin) {
+          contact.append(contactLink("LinkedIn", p.linkedin));
+        }
+        if (p.primaryEmail) {
+          contact.append(contactLink("Email", `mailto:${p.primaryEmail}`));
+        }
+        if (p.activeRole.website) {
+          contact.append(contactLink("Company", p.activeRole.website));
+        }
+        if (!contact.childElementCount) {
+          const muted = document.createElement("span");
+          muted.className = "small-label";
+          muted.textContent = "No contact links available.";
+          contact.append(muted);
+        }
+
+        const signals = document.createElement("div");
+        signals.className = "meta";
+        signals.append(buildMeta("🤝", `${p.connections} connections`));
+        if (p.followers) signals.append(buildMeta("👥", `${p.followers} followers`));
+        if (p.updatedAt) signals.append(buildMeta("⏱", `Updated ${formatDate(p.updatedAt)}`));
+
+        if (p.activity.length) {
+          const activityWrap = document.createElement("div");
+          activityWrap.className = "meta";
+          activityWrap.append(buildMeta("📰", "Recent activity:"));
+          p.activity.forEach((a) => {
+            const link = document.createElement("a");
+            link.href = a.activity_url;
+            link.target = "_blank";
+            link.rel = "noreferrer";
+            link.textContent = a.title ? truncate(a.title, 80) : a.activity_url;
+            activityWrap.append(link);
+          });
+          card.append(activityWrap);
+        }
+
+        card.append(header, role, meta, tagRow, education, contact, signals);
+        frag.append(card);
+      });
+
+      dom.cards.append(frag);
+    }
+
+    function renderActiveFilters() {
+      dom.activeFilters.innerHTML = "";
+      const frag = document.createDocumentFragment();
+      const filterMap = [
+        ["location", state.location],
+        ["industry", state.industry],
+        ["department", state.department],
+        ["level", state.level],
+        ["experience", state.experience !== "any" ? state.experience : ""]
+      ];
+
+      filterMap.forEach(([key, value]) => {
+        if (!value) return;
+        frag.append(chip(`${key}: ${value}`, () => {
+          state[key] = key === "experience" ? "any" : "";
+          const elementMap = {
+            location: dom.locationSelect,
+            industry: dom.industrySelect,
+            department: dom.departmentSelect,
+            level: dom.levelSelect,
+            experience: dom.experienceSelect
+          };
+          if (elementMap[key]) elementMap[key].value = state[key];
+          render();
+        }));
+      });
+
+      if (state.decisionMaker) frag.append(chip("Decision maker", () => toggleCheckbox(dom.decisionCheckbox, "decisionMaker")));
+      if (state.working) frag.append(chip("Working", () => toggleCheckbox(dom.workingCheckbox, "working")));
+      if (state.email) frag.append(chip("Has email", () => toggleCheckbox(dom.emailCheckbox, "email")));
+      if (state.linkedin) frag.append(chip("Has LinkedIn", () => toggleCheckbox(dom.linkedinCheckbox, "linkedin")));
+      if (state.query) frag.append(chip(`Search: ${state.query}`, () => {
+        state.query = "";
+        dom.searchInput.value = "";
+        render();
+      }));
+
+      dom.activeFilters.append(frag);
+    }
+
+    function toggleCheckbox(el, key) {
+      el.checked = false;
+      state[key] = false;
+      render();
+    }
+
+    function chip(label, onClose) {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = label;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "×";
+      btn.addEventListener("click", onClose);
+      c.append(btn);
+      return c;
+    }
+
+    function tag(text) {
+      const t = document.createElement("span");
+      t.className = "tag";
+      t.textContent = text;
+      return t;
+    }
+
+    function contactLink(label, href) {
+      const a = document.createElement("a");
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noreferrer";
+      a.textContent = label;
+      return a;
+    }
+
+    function buildMeta(symbol, text) {
+      const span = document.createElement("span");
+      span.textContent = `${symbol} ${text}`;
+      return span;
+    }
+
+    function badge(label) {
+      const span = document.createElement("span");
+      span.className = "pill";
+      span.textContent = label;
+      return span;
+    }
+
+    function updateStats(total, filtered) {
+      dom.totalStat.textContent = total || 0;
+      dom.matchingStat.textContent = filtered.length || 0;
+      dom.reachableStat.textContent = filtered.filter((p) => p.primaryEmail).length;
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function truncate(str, max) {
+      if (!str) return "";
+      return str.length > max ? `${str.slice(0, max - 1)}…` : str;
+    }
+  </script>
+</body>
+</html>
