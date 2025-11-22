@@ -825,6 +825,15 @@
         .map((e) => e.professional_email)
         .filter(Boolean);
       const primaryEmail = profile.primary_professional_email || emails[0] || "";
+      const github = {
+        url: profile.github_url || "",
+        username: profile.github_username || "",
+        publicRepos: profile.github_public_repos ?? null,
+        followers: profile.github_followers ?? null,
+        contributions: profile.github_contributions_count ?? null,
+        recentEvents: profile.github_recent_events_14d ?? null,
+        updatedAt: profile.github_updated_at || ""
+      };
 
       return {
         id: profile.id,
@@ -859,7 +868,8 @@
           size: activeExp.company_size_range || "",
           website: activeExp.company_website || "",
           companyLinkedin: activeExp.company_linkedin_url || ""
-        }
+        },
+        github
       };
     }
 
@@ -938,6 +948,7 @@
             p.activeRole.title,
             p.activeRole.company,
             p.industries.join(" "),
+            p.github.username,
             p.skills.join(" "),
             p.degrees.join(" ")
           ]
@@ -1042,6 +1053,9 @@
         if (p.primaryEmail) {
           contact.append(contactLink("Email", `mailto:${p.primaryEmail}`));
         }
+        if (p.github.url) {
+          contact.append(contactLink("GitHub", p.github.url));
+        }
         if (p.activeRole.website) {
           contact.append(contactLink("Company", p.activeRole.website));
         }
@@ -1057,23 +1071,41 @@
         signals.append(buildMeta("🤝", `${p.connections} connections`));
         if (p.followers) signals.append(buildMeta("👥", `${p.followers} followers`));
         if (p.updatedAt) signals.append(buildMeta("⏱", `Updated ${formatDate(p.updatedAt)}`));
+        const githubMeta = p.github.url
+          ? (() => {
+              const gh = document.createElement("div");
+              gh.className = "meta";
+              gh.append(buildMeta("💻", p.github.username || "GitHub"));
+              if (p.github.publicRepos !== null) gh.append(buildMeta("📦", `${p.github.publicRepos} repos`));
+              if (p.github.followers !== null) gh.append(buildMeta("🙌", `${p.github.followers} followers`));
+              if (p.github.contributions !== null) gh.append(buildMeta("🧭", `${p.github.contributions} contributions`));
+              if (p.github.recentEvents !== null) gh.append(buildMeta("⚡", `${p.github.recentEvents} events in last 14d`));
+              if (p.github.updatedAt) gh.append(buildMeta("⏱", `Profile ${formatDate(p.github.updatedAt)}`));
+              return gh;
+            })()
+          : null;
 
-        if (p.activity.length) {
-          const activityWrap = document.createElement("div");
-          activityWrap.className = "meta";
-          activityWrap.append(buildMeta("📰", "Recent activity:"));
-          p.activity.forEach((a) => {
-            const link = document.createElement("a");
-            link.href = a.activity_url;
-            link.target = "_blank";
-            link.rel = "noreferrer";
-            link.textContent = a.title ? truncate(a.title, 80) : a.activity_url;
-            activityWrap.append(link);
-          });
-          card.append(activityWrap);
-        }
+        const activityWrap = p.activity.length
+          ? (() => {
+              const wrap = document.createElement("div");
+              wrap.className = "meta";
+              wrap.append(buildMeta("📰", "Recent activity:"));
+              p.activity.forEach((a) => {
+                const link = document.createElement("a");
+                link.href = a.activity_url;
+                link.target = "_blank";
+                link.rel = "noreferrer";
+                link.textContent = a.title ? truncate(a.title, 80) : a.activity_url;
+                wrap.append(link);
+              });
+              return wrap;
+            })()
+          : null;
 
-        card.append(header, role, meta, tagRow, education, contact, signals);
+        const sections = [header, role, meta, tagRow, education, contact, signals];
+        if (githubMeta) sections.push(githubMeta);
+        if (activityWrap) sections.push(activityWrap);
+        card.append(...sections);
         frag.append(card);
       });
 
