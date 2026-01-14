@@ -1020,6 +1020,12 @@ Epoch 020 | loss 1.5774 | train mIoU 0.3057 acc 0.5885 | test mIoU 0.2709 acc 0.
               <canvas id="city-performance-chart" data-baseline="0.46467" aria-label="Best validation mIoU per layer on Cityscapes with CLIP baseline" role="img"></canvas>
               <small>Dashed line marks the CLIP L/14@336 linear probe baseline (0.4647 mIoU).</small>
             </div>
+            <div class="layer-overview-chart">
+              <h3>Best validation mIoU across CLIP layers (ADE20K)</h3>
+              <p>Layers 0-24 from CLIP ViT-L/14@336 linear probes on ADE20K dataset.</p>
+              <canvas id="clip-performance-chart" aria-label="Best validation mIoU per layer on CLIP ADE20K" role="img"></canvas>
+              <small>CLIP layers show progressive improvement in segmentation ability, peaking at layer 24 (0.3438 mIoU).</small>
+            </div>
           </div>
         </details>
       </section>
@@ -7037,6 +7043,21 @@ Epoch 020 | loss 1.5774 | train mIoU 0.3057 acc 0.5885 | test mIoU 0.2709 acc 0.
           { layer: 24, value: 0.507496 },
           { layer: 28, value: 0.509702 },
           { layer: 32, value: 0.50021 }
+        ]
+      },
+      {
+        canvasId: 'clip-performance-chart',
+        data: [
+          { layer: 0, value: 0.014943 },
+          { layer: 3, value: 0.039049 },
+          { layer: 6, value: 0.062691 },
+          { layer: 9, value: 0.116666 },
+          { layer: 12, value: 0.184831 },
+          { layer: 15, value: 0.269235 },
+          { layer: 18, value: 0.338447 },
+          { layer: 21, value: 0.336474 },
+          { layer: 23, value: 0.343455 },
+          { layer: 24, value: 0.343843 }
         ]
       }
     ];
