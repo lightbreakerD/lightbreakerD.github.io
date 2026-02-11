@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linear Probing Results - Best validation mIoU (ADE20K)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      color-scheme: dark;
+      --bg: #020617;
+      --panel: rgba(5, 9, 23, 0.92);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent: #6ee7ff;
+      --accent-2: #c084fc;
+      --text: #f4f6ff;
+      --muted: rgba(244, 246, 255, 0.72);
+      --code-bg: rgba(9, 13, 30, 0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    main {
+      width: min(1100px, 92vw);
+      margin: 0 auto;
+      padding: 4.5rem 0 6rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .layer-overview-chart {
+      margin-top: 2rem;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1.5rem;
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .layer-overview-chart h3 {
+      margin: 0;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.05rem;
+    }
+
+    .layer-overview-chart p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .layer-overview-chart canvas {
+      width: 100%;
+      height: 320px;
+      border-radius: 1rem;
+      background: rgba(4, 7, 20, 0.7);
+    }
+
+    .layer-overview-chart small {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Bidirectional Llava FlexAttention layers (ADE20K)</h3>
+      <p>Layers 0-28 from Bidirectional Llava FlexAttention linear probes on ADE20K dataset.</p>
+      <canvas id="bidirectional-chart" aria-label="Best validation mIoU per layer on Bidirectional Llava FlexAttention ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 28 (0.411 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal Llava FlexAttention layers (ADE20K)</h3>
+      <p>Layers 0-28 from Causal Llava FlexAttention linear probes on ADE20K dataset.</p>
+      <canvas id="causal-chart" aria-label="Best validation mIoU per layer on Causal Llava FlexAttention ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.407 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across DINOv2 layers (ADE20K)</h3>
+      <p>Layers 0-24 from DINOv2 linear probes on ADE20K dataset.</p>
+      <canvas id="dinov2-chart" aria-label="Best validation mIoU per layer on DINOv2 ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.456 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across SAM3 layers (ADE20K)</h3>
+      <p>Layers 0-32 from SAM3 linear probes on ADE20K dataset.</p>
+      <canvas id="sam3-chart" aria-label="Best validation mIoU per layer on SAM3 ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.431 mIoU).</small>
+    </div>
+  </main>
+  <script>
+    const datasetCharts = [
+      {
+        canvasId: 'bidirectional-chart',
+        data: [
+          { layer: 0, value: 0.326802 },
+          { layer: 4, value: 0.343012 },
+          { layer: 8, value: 0.362378 },
+          { layer: 12, value: 0.391634 },
+          { layer: 16, value: 0.406024 },
+          { layer: 20, value: 0.407202 },
+          { layer: 24, value: 0.408398 },
+          { layer: 28, value: 0.411447 }
+        ]
+      },
+      {
+        canvasId: 'causal-chart',
+        data: [
+          { layer: 0, value: 0.332234 },
+          { layer: 4, value: 0.346789 },
+          { layer: 8, value: 0.369442 },
+          { layer: 12, value: 0.396410 },
+          { layer: 16, value: 0.406671 },
+          { layer: 20, value: 0.407237 },
+          { layer: 24, value: 0.405712 },
+          { layer: 28, value: 0.405443 }
+        ]
+      },
+      {
+        canvasId: 'dinov2-chart',
+        data: [
+          { layer: 0, value: 0.008191 },
+          { layer: 3, value: 0.012415 },
+          { layer: 6, value: 0.018387 },
+          { layer: 9, value: 0.027071 },
+          { layer: 12, value: 0.059576 },
+          { layer: 15, value: 0.148976 },
+          { layer: 18, value: 0.314843 },
+          { layer: 21, value: 0.429185 },
+          { layer: 24, value: 0.455842 }
+        ]
+      },
+      {
+        canvasId: 'sam3-chart',
+        data: [
+          { layer: 0, value: 0.013853 },
+          { layer: 4, value: 0.071034 },
+          { layer: 8, value: 0.128986 },
+          { layer: 12, value: 0.228102 },
+          { layer: 16, value: 0.327335 },
+          { layer: 20, value: 0.390412 },
+          { layer: 24, value: 0.430779 },
+          { layer: 28, value: 0.419953 },
+          { layer: 32, value: 0.410208 }
+        ]
+      }
+    ];
+
+    function formatMetricValue(value) {
+      if (typeof value !== 'number' || Number.isNaN(value)) {
+        return '—';
+      }
+      return value.toFixed(3);
+    }
+
+    function renderDatasetChart(canvasId, points) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        return;
+      }
+
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (!width || !height) {
+        return;
+      }
+
+      const context = canvas.getContext('2d');
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.scale(ratio, ratio);
+      context.clearRect(0, 0, width, height);
+
+      if (!points.length) {
+        context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        context.font = '14px Inter, sans-serif';
+        context.textBaseline = 'middle';
+        context.fillText('No layer metrics available', 16, height / 2);
+        return;
+      }
+
+      const baselineAttr = parseFloat(canvas.dataset.baseline || '');
+      const baseline = Number.isFinite(baselineAttr) ? baselineAttr : null;
+
+      const valueList = points.map((point) => point.value);
+      if (baseline !== null) {
+        valueList.push(baseline);
+      }
+
+      const minValue = Math.min(...valueList);
+      const maxValue = Math.max(...valueList);
+      const padding = (maxValue - minValue) * 0.1 || 0.01;
+      const chartMin = Math.max(0, minValue - padding);
+      const chartMax = Math.min(1, maxValue + padding);
+
+      const left = 54;
+      const right = 28;
+      const top = 32;
+      const bottom = 50;
+      const chartWidth = width - left - right;
+      const chartHeight = height - top - bottom;
+
+      const projectX = (index) => {
+        if (points.length === 1) {
+          return left + chartWidth / 2;
+        }
+        return left + (chartWidth * index) / (points.length - 1);
+      };
+
+      const projectY = (value) => {
+        const range = chartMax - chartMin || 1;
+        return height - bottom - ((value - chartMin) / range) * chartHeight;
+      };
+
+      const axisColor = 'rgba(255, 255, 255, 0.15)';
+      context.strokeStyle = axisColor;
+      context.lineWidth = 1.2;
+      context.beginPath();
+      context.moveTo(left, top);
+      context.lineTo(left, height - bottom);
+      context.lineTo(width - right, height - bottom);
+      context.stroke();
+
+      const yTicks = 5;
+      context.strokeStyle = axisColor;
+      context.fillStyle = 'rgba(244, 246, 255, 0.65)';
+      context.font = '12px Inter, sans-serif';
+      context.textAlign = 'right';
+      context.textBaseline = 'middle';
+      for (let i = 0; i <= yTicks; i += 1) {
+        const value = chartMin + ((chartMax - chartMin) * i) / yTicks;
+        const y = projectY(value);
+        context.beginPath();
+        context.moveTo(left - 6, y);
+        context.lineTo(left, y);
+        context.stroke();
+        context.fillText(formatMetricValue(value), left - 10, y);
+      }
+
+      context.textAlign = 'center';
+      context.textBaseline = 'top';
+      context.fillStyle = 'rgba(244, 246, 255, 0.6)';
+      context.strokeStyle = axisColor;
+      points.forEach((point, index) => {
+        const x = projectX(index);
+        context.beginPath();
+        context.moveTo(x, height - bottom);
+        context.lineTo(x, height - bottom + 6);
+        context.stroke();
+        context.fillText(point.layer, x, height - bottom + 8);
+      });
+
+      context.textAlign = 'left';
+      context.textBaseline = 'middle';
+      context.font = '12px Inter, sans-serif';
+      context.fillStyle = 'rgba(244, 246, 255, 0.75)';
+
+      const legendY = top - 14;
+      let legendX = left;
+      if (legendY > 10) {
+        context.strokeStyle = '#6ee7ff';
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(legendX, legendY);
+        context.lineTo(legendX + 22, legendY);
+        context.stroke();
+        context.fillText('Best mIoU (val)', legendX + 28, legendY);
+
+        if (baseline !== null) {
+          legendX += 160;
+          context.save();
+          context.setLineDash([6, 6]);
+          context.strokeStyle = 'rgba(192, 132, 252, 0.7)';
+          context.beginPath();
+          context.moveTo(legendX, legendY);
+          context.lineTo(legendX + 22, legendY);
+          context.stroke();
+          context.restore();
+          context.fillText(`CLIP baseline ${formatMetricValue(baseline)}`, legendX + 28, legendY);
+        }
+      }
+
+      if (baseline !== null) {
+        const baselineY = projectY(baseline);
+        context.save();
+        context.setLineDash([6, 6]);
+        context.strokeStyle = 'rgba(192, 132, 252, 0.7)';
+        context.lineWidth = 1.6;
+        context.beginPath();
+        context.moveTo(left, baselineY);
+        context.lineTo(width - right, baselineY);
+        context.stroke();
+        context.restore();
+      }
+
+      context.strokeStyle = '#6ee7ff';
+      context.lineWidth = 2;
+      context.beginPath();
+      points.forEach((point, index) => {
+        const x = projectX(index);
+        const y = projectY(point.value);
+        if (index === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      });
+      context.stroke();
+
+      context.fillStyle = '#6ee7ff';
+      points.forEach((point, index) => {
+        const x = projectX(index);
+        const y = projectY(point.value);
+        context.beginPath();
+        context.arc(x, y, 3.2, 0, Math.PI * 2);
+        context.fill();
+      });
+    }
+
+    datasetCharts.forEach(({ canvasId, data }) => {
+      const render = () => renderDatasetChart(canvasId, data);
+      render();
+      window.addEventListener('resize', render);
+    });
+  </script>
+</body>
+</html>
