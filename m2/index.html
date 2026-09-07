@@ -74,6 +74,140 @@
       color: var(--muted);
       font-size: 0.75rem;
     }
+
+    .benchmark-section {
+      margin-top: 2rem;
+    }
+
+    .benchmark-section h3 {
+      margin: 0 0 1rem;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.05rem;
+    }
+
+    .benchmark-table-wrap {
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .benchmark-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .benchmark-table th,
+    .benchmark-table td {
+      padding: 0.6rem 0.75rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .benchmark-table th {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.03);
+      position: sticky;
+      top: 0;
+    }
+
+    .benchmark-table th:first-child,
+    .benchmark-table td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: var(--bg);
+      z-index: 1;
+      font-weight: 500;
+    }
+
+    .benchmark-table th:first-child {
+      background: rgba(5, 9, 23, 0.98);
+      z-index: 2;
+    }
+
+    .benchmark-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .benchmark-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .benchmark-table tr:hover td:first-child {
+      background: rgba(5, 9, 23, 0.92);
+    }
+
+    .benchmark-table .best {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .model-compare {
+      margin-top: 2rem;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1.5rem;
+    }
+
+    .model-compare h3 {
+      margin: 0 0 1rem;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.05rem;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: center;
+    }
+
+    .compare-table th {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .compare-table th:first-child,
+    .compare-table td:first-child {
+      text-align: left;
+    }
+
+    .compare-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .compare-table .winner {
+      font-weight: 700;
+    }
+
+    .compare-table .delta-pos {
+      color: #4ade80;
+    }
+
+    .compare-table .delta-neg {
+      color: #f87171;
+    }
   </style>
 </head>
 <body>
@@ -104,6 +238,226 @@
       <p>Layers 0-32 from SAM3 linear probes on ADE20K dataset.</p>
       <canvas id="sam3-chart" aria-label="Best validation mIoU per layer on SAM3 ADE20K" role="img"></canvas>
       <small>Peak performance at layer 24 (0.431 mIoU).</small>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (DINOv2 Vision Encoder) (ADE20K)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using DINOv2 vision encoder on ADE20K dataset.</p>
+      <canvas id="causal-dinov2-chart" data-baseline="0.455842" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM DINOv2 ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.445 mIoU). Dashed line marks the DINOv2 vision encoder baseline (0.456 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (DINOv2 Vision Encoder) (ADE20K) — Y-axis from 0</h3>
+      <p>Same data as above with y-axis starting at 0 for absolute scale comparison.</p>
+      <canvas id="causal-dinov2-chart-zero" data-baseline="0.455842" data-force-zero="true" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM DINOv2 ADE20K (y from 0)" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.445 mIoU). Dashed line marks the DINOv2 vision encoder baseline (0.456 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (SAM3 Vision Encoder) (ADE20K)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using SAM3 vision encoder on ADE20K dataset.</p>
+      <canvas id="causal-sam3-chart" data-baseline="0.430779" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM SAM3 ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.383 mIoU). Dashed line marks the SAM3 vision encoder baseline (0.431 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (SAM3 Vision Encoder) (ADE20K) — Y-axis from 0</h3>
+      <p>Same data as above with y-axis starting at 0 for absolute scale comparison.</p>
+      <canvas id="causal-sam3-chart-zero" data-baseline="0.430779" data-force-zero="true" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM SAM3 ADE20K (y from 0)" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.383 mIoU). Dashed line marks the SAM3 vision encoder baseline (0.431 mIoU).</small>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across bidi llava dinov2 layers (ADE20K)</h3>
+      <p>Layers 0-32 from bidi llava dinov2 linear probes on ADE20K dataset.</p>
+      <canvas id="bidi-dinov2-chart" aria-label="Best validation mIoU per layer on bidi llava dinov2 ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.448 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across bi lava 2epochs layers (ADE20K)</h3>
+      <p>Layers 0-32 from bi lava 2epochs linear probes on ADE20K dataset.</p>
+      <canvas id="bi-2epochs-chart" aria-label="Best validation mIoU per layer on bi lava 2epochs ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.428 mIoU).</small>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <div class="benchmark-section">
+      <h3>VLM Benchmark Results</h3>
+      <div class="benchmark-table-wrap">
+        <table class="benchmark-table" id="benchmark-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>GQA</th>
+              <th>MMBench</th>
+              <th>MME Perc.</th>
+              <th>MME Cog.</th>
+              <th>POPE</th>
+              <th>ScienceQA</th>
+              <th>TextVQA</th>
+              <th>VizWiz</th>
+              <th>MMMU</th>
+              <th>LP Seg. mIoU</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="model-cards"></div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <div class="layer-overview-chart">
+      <h3>Sanity Check No. 2 — CLIP vs LLaVA-1.5 (ADE20K)</h3>
+      <p>Comparing CLIP and LLaVA-1.5 linear probes on selected layers to verify evaluation pipeline correctness.</p>
+      <canvas id="sanity-check-chart" aria-label="Sanity check: CLIP vs LLaVA-1.5 mIoU on ADE20K" role="img"></canvas>
+      <small>CLIP peaks at layer 24 (0.347 mIoU). LLaVA-1.5 peaks at layer 20 (0.407 mIoU).</small>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across unfrozen causal llava layers (ADE20K)</h3>
+      <p>Layers 0-32 from unfrozen causal llava linear probes on ADE20K dataset.</p>
+      <canvas id="unfrozen-chart" aria-label="Best validation mIoU per layer on unfrozen causal llava ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 4 (0.350 mIoU).</small>
+    </div>
+
+    <div class="model-compare">
+      <h3>unfrozen causal llava vs. baseline</h3>
+      <table class="compare-table" id="unfrozen-compare-table">
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>Baseline</th>
+            <th>unfrozen causal llava</th>
+            <th>Diff</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across SigLIP layers (ADE20K)</h3>
+      <p>Layers 3-27 from SigLIP ViT-SO400M/14@384 linear probes on ADE20K dataset.</p>
+      <canvas id="siglip-chart" aria-label="Best validation mIoU per layer on SigLIP ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.387 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (SigLIP Vision Encoder) (ADE20K)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using SigLIP vision encoder on ADE20K dataset.</p>
+      <canvas id="causal-siglip-chart" data-baseline="0.386970" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM SigLIP ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 12 (0.354 mIoU). Dashed line marks the SigLIP vision encoder baseline (0.387 mIoU).</small>
+    </div>
+
+    <div class="model-compare">
+      <h3>causal llava siglip vs. baseline</h3>
+      <table class="compare-table" id="siglip-compare-table">
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>Baseline</th>
+            <th>causal llava siglip</th>
+            <th>Diff</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Bidi LLaVA MLLM Layers (SigLIP Vision Encoder) (ADE20K)</h3>
+      <p>Layers 0-32 from Bidi LLaVA MLLM linear probes using SigLIP vision encoder on ADE20K dataset.</p>
+      <canvas id="bidi-siglip-chart" data-baseline="0.386970" aria-label="Best validation mIoU per layer on Bidi LLaVA MLLM SigLIP ADE20K" role="img"></canvas>
+      <small>Peak performance at layer 32 (0.413 mIoU). Dashed line marks the SigLIP vision encoder baseline (0.387 mIoU).</small>
+    </div>
+
+    <div class="model-compare">
+      <h3>bidi llava siglip vs. baseline</h3>
+      <table class="compare-table" id="bidi-siglip-compare-table">
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>Baseline</th>
+            <th>bidi llava siglip</th>
+            <th>Diff</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 3rem 0;" />
+
+    <h2 style="font-family: 'Space Grotesk', 'Inter', sans-serif; font-size: 1.6rem; margin: 0 0 0.5rem;">Additional Dataset Experiments</h2>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across DINOv2 layers (Pascal VOC)</h3>
+      <p>Layers 3-24 from DINOv2 linear probes on Pascal VOC dataset.</p>
+      <canvas id="dinov2-voc-chart" aria-label="Best validation mIoU per layer on DINOv2 Pascal VOC" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.776 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (DINOv2 Vision Encoder) (Pascal VOC)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using DINOv2 vision encoder on Pascal VOC dataset.</p>
+      <canvas id="causal-dinov2-voc-chart" data-baseline="0.775725" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM DINOv2 Pascal VOC" role="img"></canvas>
+      <small>Peak performance at layer 28 (0.775 mIoU). Dashed line marks the DINOv2 vision encoder baseline (0.776 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across SAM3 layers (Pascal VOC)</h3>
+      <p>Layers 3-24 from SAM3 linear probes on Pascal VOC dataset.</p>
+      <canvas id="sam3-voc-chart" aria-label="Best validation mIoU per layer on SAM3 Pascal VOC" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.711 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (SAM3 Vision Encoder) (Pascal VOC)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using SAM3 vision encoder on Pascal VOC dataset.</p>
+      <canvas id="causal-sam3-voc-chart" data-baseline="0.711386" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM SAM3 Pascal VOC" role="img"></canvas>
+      <small>Peak performance at layer 32 (0.681 mIoU). Dashed line marks the SAM3 vision encoder baseline (0.711 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across DINOv2 layers (Cityscapes)</h3>
+      <p>Layers 3-24 from DINOv2 linear probes on Cityscapes dataset.</p>
+      <canvas id="dinov2-city-chart" aria-label="Best validation mIoU per layer on DINOv2 Cityscapes" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.579 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (DINOv2 Vision Encoder) (Cityscapes)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using DINOv2 vision encoder on Cityscapes dataset.</p>
+      <canvas id="causal-dinov2-city-chart" data-baseline="0.578535" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM DINOv2 Cityscapes" role="img"></canvas>
+      <small>Peak performance at layer 16 (0.571 mIoU). Dashed line marks the DINOv2 vision encoder baseline (0.579 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across SAM3 layers (Cityscapes)</h3>
+      <p>Layers 3-24 from SAM3 linear probes on Cityscapes dataset.</p>
+      <canvas id="sam3-city-chart" aria-label="Best validation mIoU per layer on SAM3 Cityscapes" role="img"></canvas>
+      <small>Peak performance at layer 24 (0.547 mIoU).</small>
+    </div>
+
+    <div class="layer-overview-chart">
+      <h3>Best validation mIoU across Causal LLaVA MLLM Layers (SAM3 Vision Encoder) (Cityscapes)</h3>
+      <p>Layers 0-32 from Causal LLaVA MLLM linear probes using SAM3 vision encoder on Cityscapes dataset.</p>
+      <canvas id="causal-sam3-city-chart" data-baseline="0.547348" aria-label="Best validation mIoU per layer on Causal LLaVA MLLM SAM3 Cityscapes" role="img"></canvas>
+      <small>Peak performance at layer 20 (0.508 mIoU). Dashed line marks the SAM3 vision encoder baseline (0.547 mIoU).</small>
     </div>
   </main>
   <script>
@@ -161,6 +515,240 @@
           { layer: 28, value: 0.419953 },
           { layer: 32, value: 0.410208 }
         ]
+      },
+      {
+        canvasId: 'causal-dinov2-chart',
+        data: [
+          { layer: 0, value: 0.429001 },
+          { layer: 4, value: 0.430849 },
+          { layer: 8, value: 0.439214 },
+          { layer: 12, value: 0.443072 },
+          { layer: 16, value: 0.443914 },
+          { layer: 20, value: 0.445014 },
+          { layer: 24, value: 0.443345 },
+          { layer: 28, value: 0.441615 },
+          { layer: 32, value: 0.441058 }
+        ]
+      },
+      {
+        canvasId: 'causal-dinov2-chart-zero',
+        data: [
+          { layer: 0, value: 0.429001 },
+          { layer: 4, value: 0.430849 },
+          { layer: 8, value: 0.439214 },
+          { layer: 12, value: 0.443072 },
+          { layer: 16, value: 0.443914 },
+          { layer: 20, value: 0.445014 },
+          { layer: 24, value: 0.443345 },
+          { layer: 28, value: 0.441615 },
+          { layer: 32, value: 0.441058 }
+        ]
+      },
+      {
+        canvasId: 'causal-sam3-chart',
+        data: [
+          { layer: 0, value: 0.328088 },
+          { layer: 4, value: 0.332711 },
+          { layer: 8, value: 0.342811 },
+          { layer: 12, value: 0.361577 },
+          { layer: 16, value: 0.368661 },
+          { layer: 20, value: 0.382626 },
+          { layer: 24, value: 0.378938 },
+          { layer: 28, value: 0.376451 },
+          { layer: 32, value: 0.379029 }
+        ]
+      },
+      {
+        canvasId: 'causal-sam3-chart-zero',
+        data: [
+          { layer: 0, value: 0.328088 },
+          { layer: 4, value: 0.332711 },
+          { layer: 8, value: 0.342811 },
+          { layer: 12, value: 0.361577 },
+          { layer: 16, value: 0.368661 },
+          { layer: 20, value: 0.382626 },
+          { layer: 24, value: 0.378938 },
+          { layer: 28, value: 0.376451 },
+          { layer: 32, value: 0.379029 }
+        ]
+      },
+      {
+        canvasId: 'bidi-dinov2-chart',
+        data: [
+          { layer: 0, value: 0.404747 },
+          { layer: 4, value: 0.410615 },
+          { layer: 8, value: 0.422629 },
+          { layer: 12, value: 0.435186 },
+          { layer: 16, value: 0.442272 },
+          { layer: 20, value: 0.447032 },
+          { layer: 24, value: 0.448230 },
+          { layer: 28, value: 0.445003 },
+          { layer: 32, value: 0.444560 }
+        ]
+      },
+      {
+        canvasId: 'bi-2epochs-chart',
+        data: [
+          { layer: 0, value: 0.332431 },
+          { layer: 4, value: 0.346232 },
+          { layer: 8, value: 0.371891 },
+          { layer: 12, value: 0.408695 },
+          { layer: 16, value: 0.422097 },
+          { layer: 20, value: 0.427656 },
+          { layer: 24, value: 0.427194 },
+          { layer: 28, value: 0.426784 },
+          { layer: 32, value: 0.424247 }
+        ]
+      },
+      {
+        canvasId: 'siglip-chart',
+        data: [
+          { layer: 3, value: 0.040250 },
+          { layer: 6, value: 0.082699 },
+          { layer: 9, value: 0.171188 },
+          { layer: 12, value: 0.231860 },
+          { layer: 15, value: 0.304193 },
+          { layer: 18, value: 0.365262 },
+          { layer: 21, value: 0.385943 },
+          { layer: 24, value: 0.386970 },
+          { layer: 27, value: 0.372711 }
+        ]
+      },
+      {
+        canvasId: 'causal-siglip-chart',
+        data: [
+          { layer: 0, value: 0.314384 },
+          { layer: 4, value: 0.326803 },
+          { layer: 8, value: 0.340073 },
+          { layer: 12, value: 0.353859 },
+          { layer: 16, value: 0.352969 },
+          { layer: 20, value: 0.353003 },
+          { layer: 24, value: 0.346452 },
+          { layer: 28, value: 0.339977 },
+          { layer: 32, value: 0.334133 }
+        ]
+      },
+      {
+        canvasId: 'bidi-siglip-chart',
+        data: [
+          { layer: 0, value: 0.323873 },
+          { layer: 4, value: 0.334039 },
+          { layer: 8, value: 0.352998 },
+          { layer: 12, value: 0.387837 },
+          { layer: 16, value: 0.398939 },
+          { layer: 20, value: 0.407014 },
+          { layer: 24, value: 0.410160 },
+          { layer: 28, value: 0.411755 },
+          { layer: 32, value: 0.412622 }
+        ]
+      },
+      {
+        canvasId: 'dinov2-voc-chart',
+        data: [
+          { layer: 3, value: 0.035662 },
+          { layer: 6, value: 0.037453 },
+          { layer: 9, value: 0.040554 },
+          { layer: 12, value: 0.061950 },
+          { layer: 15, value: 0.203494 },
+          { layer: 18, value: 0.512474 },
+          { layer: 21, value: 0.704018 },
+          { layer: 24, value: 0.775725 }
+        ]
+      },
+      {
+        canvasId: 'causal-dinov2-voc-chart',
+        data: [
+          { layer: 0, value: 0.744905 },
+          { layer: 4, value: 0.747524 },
+          { layer: 8, value: 0.758835 },
+          { layer: 12, value: 0.763945 },
+          { layer: 16, value: 0.764437 },
+          { layer: 20, value: 0.771753 },
+          { layer: 24, value: 0.772018 },
+          { layer: 28, value: 0.775405 },
+          { layer: 32, value: 0.775069 }
+        ]
+      },
+      {
+        canvasId: 'sam3-voc-chart',
+        data: [
+          { layer: 3, value: 0.082220 },
+          { layer: 6, value: 0.129570 },
+          { layer: 9, value: 0.190578 },
+          { layer: 12, value: 0.334787 },
+          { layer: 15, value: 0.482810 },
+          { layer: 18, value: 0.579639 },
+          { layer: 21, value: 0.651498 },
+          { layer: 24, value: 0.711386 }
+        ]
+      },
+      {
+        canvasId: 'causal-sam3-voc-chart',
+        data: [
+          { layer: 0, value: 0.524831 },
+          { layer: 4, value: 0.527757 },
+          { layer: 8, value: 0.545857 },
+          { layer: 12, value: 0.588145 },
+          { layer: 16, value: 0.604768 },
+          { layer: 20, value: 0.665070 },
+          { layer: 24, value: 0.667606 },
+          { layer: 28, value: 0.672864 },
+          { layer: 32, value: 0.681054 }
+        ]
+      },
+      {
+        canvasId: 'dinov2-city-chart',
+        data: [
+          { layer: 3, value: 0.126789 },
+          { layer: 6, value: 0.159463 },
+          { layer: 9, value: 0.181692 },
+          { layer: 12, value: 0.231437 },
+          { layer: 15, value: 0.309777 },
+          { layer: 18, value: 0.420683 },
+          { layer: 21, value: 0.553564 },
+          { layer: 24, value: 0.578535 }
+        ]
+      },
+      {
+        canvasId: 'causal-dinov2-city-chart',
+        data: [
+          { layer: 0, value: 0.567141 },
+          { layer: 4, value: 0.567806 },
+          { layer: 8, value: 0.568794 },
+          { layer: 12, value: 0.570880 },
+          { layer: 16, value: 0.571223 },
+          { layer: 20, value: 0.570804 },
+          { layer: 24, value: 0.570479 },
+          { layer: 28, value: 0.570476 },
+          { layer: 32, value: 0.566554 }
+        ]
+      },
+      {
+        canvasId: 'sam3-city-chart',
+        data: [
+          { layer: 3, value: 0.251857 },
+          { layer: 6, value: 0.299419 },
+          { layer: 9, value: 0.343094 },
+          { layer: 12, value: 0.378494 },
+          { layer: 15, value: 0.434984 },
+          { layer: 18, value: 0.478443 },
+          { layer: 21, value: 0.520193 },
+          { layer: 24, value: 0.547348 }
+        ]
+      },
+      {
+        canvasId: 'causal-sam3-city-chart',
+        data: [
+          { layer: 0, value: 0.497853 },
+          { layer: 4, value: 0.500348 },
+          { layer: 8, value: 0.502026 },
+          { layer: 12, value: 0.505167 },
+          { layer: 16, value: 0.502257 },
+          { layer: 20, value: 0.507758 },
+          { layer: 24, value: 0.505309 },
+          { layer: 28, value: 0.501180 },
+          { layer: 32, value: 0.493220 }
+        ]
       }
     ];
 
@@ -207,10 +795,11 @@
         valueList.push(baseline);
       }
 
+      const forceZero = canvas.dataset.forceZero === 'true';
       const minValue = Math.min(...valueList);
       const maxValue = Math.max(...valueList);
       const padding = (maxValue - minValue) * 0.1 || 0.01;
-      const chartMin = Math.max(0, minValue - padding);
+      const chartMin = forceZero ? 0 : Math.max(0, minValue - padding);
       const chartMax = Math.min(1, maxValue + padding);
 
       const left = 54;
@@ -296,7 +885,7 @@
           context.lineTo(legendX + 22, legendY);
           context.stroke();
           context.restore();
-          context.fillText(`CLIP baseline ${formatMetricValue(baseline)}`, legendX + 28, legendY);
+          context.fillText(`Baseline ${formatMetricValue(baseline)}`, legendX + 28, legendY);
         }
       }
 
@@ -342,6 +931,367 @@
       render();
       window.addEventListener('resize', render);
     });
+
+    const benchmarkModels = [
+      {
+        name: 'baseline causal llava flexattention',
+        gqa: 62.59, mmbench: 66.41, mme_p: 1483.4, mme_c: 283.6,
+        pope: 86.78, sciqa: 68.67, textvqa: 46.86, vizwiz: 56.05, mmmu: 35.33,
+        lp_miou: 0.407237
+      },
+      {
+        name: 'bidirectional llava flexattention',
+        gqa: 62.74, mmbench: 65.46, mme_p: 1538.1, mme_c: 287.9,
+        pope: 86.88, sciqa: 69.71, textvqa: 46.96, vizwiz: 57.53, mmmu: 36.22,
+        lp_miou: 0.411447
+      },
+      {
+        name: 'bi lava 2epochs',
+        gqa: 62.90, mmbench: 63.49, mme_p: 1458.2, mme_c: 310.4,
+        pope: 88.10, sciqa: 67.67, textvqa: 46.48, vizwiz: 53.84, mmmu: 34.89,
+        lp_miou: 0.427656
+      },
+      {
+        name: 'bidi llava dinov2',
+        gqa: 60.51, mmbench: 55.33, mme_p: 1247.3, mme_c: 326.4,
+        pope: 85.13, sciqa: 66.34, textvqa: 13.68, vizwiz: 45.77, mmmu: 32.44,
+        lp_miou: 0.448230
+      },
+      {
+        name: 'causal llava dinov2',
+        gqa: 62.08, mmbench: 57.73, mme_p: 1304.0, mme_c: 323.6,
+        pope: 87.17, sciqa: 66.09, textvqa: 13.98, vizwiz: 51.44, mmmu: 34.56,
+        lp_miou: 0.445014
+      },
+      {
+        name: 'causal llava sam3',
+        gqa: 60.66, mmbench: 55.50, mme_p: 1296.3, mme_c: 267.1,
+        pope: 83.86, sciqa: 63.16, textvqa: 26.11, vizwiz: 46.85, mmmu: 33.22,
+        lp_miou: 0.382626
+      },
+      {
+        name: 'causal llava siglip',
+        gqa: 61.10, mmbench: 63.75, mme_p: 1414.4, mme_c: 274.6,
+        pope: 84.40, sciqa: 70.35, textvqa: 50.20, vizwiz: 58.19, mmmu: 34.67,
+        lp_miou: 0.353859
+      },
+      {
+        name: 'bidi llava siglip',
+        gqa: 62.12, mmbench: 66.92, mme_p: 1402.4, mme_c: 297.9,
+        pope: 84.78, sciqa: 70.75, textvqa: 53.63, vizwiz: 53.30, mmmu: 34.89,
+        lp_miou: 0.412622
+      }
+    ];
+
+    const benchmarkKeys = ['gqa', 'mmbench', 'mme_p', 'mme_c', 'pope', 'sciqa', 'textvqa', 'vizwiz', 'mmmu', 'lp_miou'];
+    const bestPerKey = {};
+    benchmarkKeys.forEach((key) => {
+      bestPerKey[key] = Math.max(...benchmarkModels.map((m) => m[key]));
+    });
+
+    const tbody = document.querySelector('#benchmark-table tbody');
+    benchmarkModels.forEach((model) => {
+      const tr = document.createElement('tr');
+      const tdName = document.createElement('td');
+      tdName.textContent = model.name;
+      tr.appendChild(tdName);
+      benchmarkKeys.forEach((key) => {
+        const td = document.createElement('td');
+        const isMME = key === 'mme_p' || key === 'mme_c';
+        const isLP = key === 'lp_miou';
+        td.textContent = isLP ? model[key].toFixed(3) : isMME ? model[key].toFixed(1) : model[key].toFixed(2);
+        if (model[key] === bestPerKey[key]) {
+          td.classList.add('best');
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    const benchmarkLabels = {
+      gqa: 'GQA', mmbench: 'MMBench', mme_p: 'MME Perc.', mme_c: 'MME Cog.',
+      pope: 'POPE', sciqa: 'ScienceQA', textvqa: 'TextVQA', vizwiz: 'VizWiz', mmmu: 'MMMU',
+      lp_miou: 'LP Seg. mIoU'
+    };
+
+    const baseline = benchmarkModels[0];
+    const cardsContainer = document.getElementById('model-cards');
+    benchmarkModels.slice(1).forEach((model) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'model-compare';
+      const title = document.createElement('h3');
+      title.textContent = model.name + ' vs. baseline';
+      wrap.appendChild(title);
+
+      let html = '<table class="compare-table"><thead><tr>' +
+        '<th>Benchmark</th><th>Baseline</th><th>' + model.name + '</th><th>Diff</th>' +
+        '</tr></thead><tbody>';
+
+      benchmarkKeys.forEach((key) => {
+        const bVal = baseline[key];
+        const mVal = model[key];
+        const isMME = key === 'mme_p' || key === 'mme_c';
+        const isLP = key === 'lp_miou';
+        const fmtB = isLP ? bVal.toFixed(3) : isMME ? bVal.toFixed(1) : bVal.toFixed(2);
+        const fmtM = isLP ? mVal.toFixed(3) : isMME ? mVal.toFixed(1) : mVal.toFixed(2);
+        const pct = ((mVal - bVal) / bVal * 100);
+        const sign = pct >= 0 ? '+' : '';
+        const deltaClass = pct >= 0 ? 'delta-pos' : 'delta-neg';
+        const bWin = bVal > mVal ? ' winner' : '';
+        const mWin = mVal > bVal ? ' winner' : '';
+        html += '<tr>' +
+          '<td>' + benchmarkLabels[key] + '</td>' +
+          '<td class="' + bWin + '">' + fmtB + '</td>' +
+          '<td class="' + mWin + '">' + fmtM + '</td>' +
+          '<td class="' + deltaClass + '">' + sign + pct.toFixed(1) + '%</td>' +
+          '</tr>';
+      });
+
+      html += '</tbody></table>';
+      wrap.innerHTML += html;
+      cardsContainer.appendChild(wrap);
+    });
+
+    /* Sanity check chart — two series on shared x-axis */
+    (function () {
+      const canvas = document.getElementById('sanity-check-chart');
+      if (!canvas) return;
+
+      const series = [
+        {
+          label: 'CLIP',
+          color: '#c084fc',
+          points: [
+            { layer: 16, value: 0.301442 },
+            { layer: 20, value: 0.346394 },
+            { layer: 24, value: 0.347322 }
+          ]
+        },
+        {
+          label: 'LLaVA-1.5',
+          color: '#6ee7ff',
+          points: [
+            { layer: 20, value: 0.406625 },
+            { layer: 24, value: 0.405943 },
+            { layer: 28, value: 0.405241 }
+          ]
+        }
+      ];
+
+      const allLayers = [...new Set(series.flatMap(s => s.points.map(p => p.layer)))].sort((a, b) => a - b);
+      const allValues = series.flatMap(s => s.points.map(p => p.value));
+      const minVal = Math.min(...allValues);
+      const maxVal = Math.max(...allValues);
+      const pad = (maxVal - minVal) * 0.1 || 0.01;
+      const chartMin = Math.max(0, minVal - pad);
+      const chartMax = Math.min(1, maxVal + pad);
+
+      function render() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        if (!width || !height) return;
+        const ctx = canvas.getContext('2d');
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = width * ratio;
+        canvas.height = height * ratio;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(ratio, ratio);
+        ctx.clearRect(0, 0, width, height);
+
+        const left = 54, right = 28, top = 32, bottom = 50;
+        const cw = width - left - right;
+        const ch = height - top - bottom;
+
+        const xOf = (layer) => left + (cw * (layer - allLayers[0])) / (allLayers[allLayers.length - 1] - allLayers[0]);
+        const yOf = (val) => height - bottom - ((val - chartMin) / (chartMax - chartMin)) * ch;
+
+        const axisColor = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = axisColor;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(left, top);
+        ctx.lineTo(left, height - bottom);
+        ctx.lineTo(width - right, height - bottom);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.65)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i <= 5; i++) {
+          const v = chartMin + ((chartMax - chartMin) * i) / 5;
+          const y = yOf(v);
+          ctx.strokeStyle = axisColor;
+          ctx.beginPath();
+          ctx.moveTo(left - 6, y);
+          ctx.lineTo(left, y);
+          ctx.stroke();
+          ctx.fillText(v.toFixed(3), left - 10, y);
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.6)';
+        allLayers.forEach((layer) => {
+          const x = xOf(layer);
+          ctx.strokeStyle = axisColor;
+          ctx.beginPath();
+          ctx.moveTo(x, height - bottom);
+          ctx.lineTo(x, height - bottom + 6);
+          ctx.stroke();
+          ctx.fillText(layer, x, height - bottom + 8);
+        });
+
+        /* Legend */
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.75)';
+        const legendY = top - 14;
+        let legendX = left;
+        series.forEach((s) => {
+          ctx.strokeStyle = s.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(legendX, legendY);
+          ctx.lineTo(legendX + 22, legendY);
+          ctx.stroke();
+          ctx.fillText(s.label, legendX + 28, legendY);
+          legendX += ctx.measureText(s.label).width + 50;
+        });
+
+        /* Lines + dots */
+        series.forEach((s) => {
+          ctx.strokeStyle = s.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          s.points.forEach((p, i) => {
+            const x = xOf(p.layer), y = yOf(p.value);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+          ctx.fillStyle = s.color;
+          s.points.forEach((p) => {
+            ctx.beginPath();
+            ctx.arc(xOf(p.layer), yOf(p.value), 3.2, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        });
+      }
+
+      render();
+      window.addEventListener('resize', render);
+    })();
+
+    /* Unfrozen causal llava graph */
+    datasetCharts.push({
+      canvasId: 'unfrozen-chart',
+      data: [
+        { layer: 0, value: 0.335809 },
+        { layer: 4, value: 0.349582 },
+        { layer: 8, value: 0.346949 },
+        { layer: 12, value: 0.332228 },
+        { layer: 16, value: 0.311560 },
+        { layer: 20, value: 0.299340 },
+        { layer: 24, value: 0.286265 },
+        { layer: 28, value: 0.276281 },
+        { layer: 32, value: 0.258027 }
+      ]
+    });
+    {
+      const entry = datasetCharts[datasetCharts.length - 1];
+      const render = () => renderDatasetChart(entry.canvasId, entry.data);
+      render();
+      window.addEventListener('resize', render);
+    }
+
+    /* Unfrozen causal llava vs baseline comparison table */
+    (function () {
+      const unfrozen = {
+        gqa: 61.45, mmbench: 62.89, mme_p: 1467.1, mme_c: 324.3,
+        pope: 85.37, sciqa: 68.32, textvqa: 42.48, vizwiz: 57.65, mmmu: 36.89,
+        lp_miou: 0.349582
+      };
+      const utbody = document.querySelector('#unfrozen-compare-table tbody');
+      benchmarkKeys.forEach((key) => {
+        const bVal = baseline[key];
+        const mVal = unfrozen[key];
+        const isMME = key === 'mme_p' || key === 'mme_c';
+        const isLP = key === 'lp_miou';
+        const fmtB = isLP ? bVal.toFixed(3) : isMME ? bVal.toFixed(1) : bVal.toFixed(2);
+        const fmtM = isLP ? mVal.toFixed(3) : isMME ? mVal.toFixed(1) : mVal.toFixed(2);
+        const pct = ((mVal - bVal) / bVal * 100);
+        const sign = pct >= 0 ? '+' : '';
+        const deltaClass = pct >= 0 ? 'delta-pos' : 'delta-neg';
+        const bWin = bVal > mVal ? ' winner' : '';
+        const mWin = mVal > bVal ? ' winner' : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + benchmarkLabels[key] + '</td>' +
+          '<td class="' + bWin + '">' + fmtB + '</td>' +
+          '<td class="' + mWin + '">' + fmtM + '</td>' +
+          '<td class="' + deltaClass + '">' + sign + pct.toFixed(1) + '%</td>';
+        utbody.appendChild(tr);
+      });
+    })();
+
+    /* Causal llava siglip vs baseline comparison table */
+    (function () {
+      const siglipModel = {
+        gqa: 61.10, mmbench: 63.75, mme_p: 1414.4, mme_c: 274.6,
+        pope: 84.40, sciqa: 70.35, textvqa: 50.20, vizwiz: 58.19, mmmu: 34.67
+      };
+      const siglipKeys = benchmarkKeys.filter((k) => k !== 'lp_miou');
+      const stbody = document.querySelector('#siglip-compare-table tbody');
+      siglipKeys.forEach((key) => {
+        const bVal = baseline[key];
+        const mVal = siglipModel[key];
+        const isMME = key === 'mme_p' || key === 'mme_c';
+        const fmtB = isMME ? bVal.toFixed(1) : bVal.toFixed(2);
+        const fmtM = isMME ? mVal.toFixed(1) : mVal.toFixed(2);
+        const pct = ((mVal - bVal) / bVal * 100);
+        const sign = pct >= 0 ? '+' : '';
+        const deltaClass = pct >= 0 ? 'delta-pos' : 'delta-neg';
+        const bWin = bVal > mVal ? ' winner' : '';
+        const mWin = mVal > bVal ? ' winner' : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + benchmarkLabels[key] + '</td>' +
+          '<td class="' + bWin + '">' + fmtB + '</td>' +
+          '<td class="' + mWin + '">' + fmtM + '</td>' +
+          '<td class="' + deltaClass + '">' + sign + pct.toFixed(1) + '%</td>';
+        stbody.appendChild(tr);
+      });
+    })();
+
+    /* Bidi llava siglip vs baseline comparison table */
+    (function () {
+      const bidiSiglipModel = {
+        gqa: 62.12, mmbench: 66.92, mme_p: 1402.4, mme_c: 297.9,
+        pope: 84.78, sciqa: 70.75, textvqa: 53.63, vizwiz: 53.30, mmmu: 34.89
+      };
+      const bidiKeys = benchmarkKeys.filter((k) => k !== 'lp_miou');
+      const btbody = document.querySelector('#bidi-siglip-compare-table tbody');
+      bidiKeys.forEach((key) => {
+        const bVal = baseline[key];
+        const mVal = bidiSiglipModel[key];
+        const isMME = key === 'mme_p' || key === 'mme_c';
+        const fmtB = isMME ? bVal.toFixed(1) : bVal.toFixed(2);
+        const fmtM = isMME ? mVal.toFixed(1) : mVal.toFixed(2);
+        const pct = ((mVal - bVal) / bVal * 100);
+        const sign = pct >= 0 ? '+' : '';
+        const deltaClass = pct >= 0 ? 'delta-pos' : 'delta-neg';
+        const bWin = bVal > mVal ? ' winner' : '';
+        const mWin = mVal > bVal ? ' winner' : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + benchmarkLabels[key] + '</td>' +
+          '<td class="' + bWin + '">' + fmtB + '</td>' +
+          '<td class="' + mWin + '">' + fmtM + '</td>' +
+          '<td class="' + deltaClass + '">' + sign + pct.toFixed(1) + '%</td>';
+        btbody.appendChild(tr);
+      });
+    })();
   </script>
 </body>
 </html>

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ViT vs LLaVA Combined Linear Probing (ADE20K, Pascal VOC, Cityscapes)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      color-scheme: dark;
+      --bg: #020617;
+      --panel: rgba(5, 9, 23, 0.92);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent: #6ee7ff;
+      --accent-2: #c084fc;
+      --text: #f4f6ff;
+      --muted: rgba(244, 246, 255, 0.72);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    main {
+      width: min(1100px, 92vw);
+      margin: 0 auto;
+      padding: 4.5rem 0 6rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.8rem;
+      margin: 0 0 0.5rem;
+    }
+
+    h2 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.4rem;
+      margin: 2.5rem 0 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0 0 2rem;
+    }
+
+    .chart-card {
+      margin-top: 2rem;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1.5rem;
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .chart-card h3 {
+      margin: 0;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.05rem;
+    }
+
+    .chart-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .chart-card canvas {
+      width: 100%;
+      height: 360px;
+      border-radius: 1rem;
+      background: rgba(4, 7, 20, 0.7);
+    }
+
+    .chart-card small {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      margin: 3rem 0;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ViT + LLaVA Combined Linear Probing</h1>
+    <p class="subtitle">Each graph shows a ViT encoder and the Causal LLaVA trained with it, plotted together. Fixed y-axis (0 &ndash; 0.85) across all graphs.</p>
+
+    <h2>ADE20K</h2>
+
+    <div class="chart-card">
+      <h3>CLIP L/14@336 + LLaVA-1.5 (ADE20K)</h3>
+      <p>CLIP ViT-L/14@336 layers 0&ndash;24 vs LLaVA-1.5 MLLM layers 0&ndash;32 (CLIP vision encoder).</p>
+      <canvas id="ade-clip"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>DINOv2 + Causal LLaVA DINOv2 (ADE20K)</h3>
+      <p>DINOv2 ViT layers 0&ndash;24 vs Causal LLaVA MLLM layers 0&ndash;32 (DINOv2 vision encoder).</p>
+      <canvas id="ade-dinov2"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>SAM3 + Causal LLaVA SAM3 (ADE20K)</h3>
+      <p>SAM3 ViT layers 0&ndash;32 vs Causal LLaVA MLLM layers 0&ndash;32 (SAM3 vision encoder).</p>
+      <canvas id="ade-sam3"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>SigLIP + Causal LLaVA SigLIP (ADE20K)</h3>
+      <p>SigLIP ViT layers 3&ndash;27 vs Causal LLaVA MLLM layers 0&ndash;32 (SigLIP vision encoder).</p>
+      <canvas id="ade-siglip"></canvas>
+    </div>
+
+    <hr />
+    <h2>Pascal VOC</h2>
+
+    <div class="chart-card">
+      <h3>CLIP L/14@336 + LLaVA-1.5 (Pascal VOC)</h3>
+      <p>LLaVA-1.5 MLLM layers 0&ndash;32 (CLIP vision encoder). Dashed line = CLIP peak baseline (0.531 mIoU).</p>
+      <canvas id="voc-clip" data-baseline="0.530708" data-baseline-label="CLIP peak"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>DINOv2 + Causal LLaVA DINOv2 (Pascal VOC)</h3>
+      <p>DINOv2 ViT layers 3&ndash;24 vs Causal LLaVA MLLM layers 0&ndash;32 (DINOv2 vision encoder).</p>
+      <canvas id="voc-dinov2"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>SAM3 + Causal LLaVA SAM3 (Pascal VOC)</h3>
+      <p>SAM3 ViT layers 3&ndash;24 vs Causal LLaVA MLLM layers 0&ndash;32 (SAM3 vision encoder).</p>
+      <canvas id="voc-sam3"></canvas>
+    </div>
+
+    <hr />
+    <h2>Cityscapes</h2>
+
+    <div class="chart-card">
+      <h3>CLIP L/14@336 + LLaVA-1.5 (Cityscapes)</h3>
+      <p>LLaVA-1.5 MLLM layers 0&ndash;32 (CLIP vision encoder). Dashed line = CLIP peak baseline (0.465 mIoU).</p>
+      <canvas id="city-clip" data-baseline="0.46467" data-baseline-label="CLIP peak"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>DINOv2 + Causal LLaVA DINOv2 (Cityscapes)</h3>
+      <p>DINOv2 ViT layers 3&ndash;24 vs Causal LLaVA MLLM layers 0&ndash;32 (DINOv2 vision encoder).</p>
+      <canvas id="city-dinov2"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>SAM3 + Causal LLaVA SAM3 (Cityscapes)</h3>
+      <p>SAM3 ViT layers 3&ndash;24 vs Causal LLaVA MLLM layers 0&ndash;32 (SAM3 vision encoder).</p>
+      <canvas id="city-sam3"></canvas>
+    </div>
+  </main>
+
+  <script>
+    /* ── Data ── */
+    const combinedCharts = [
+      /* ADE20K — CLIP + LLaVA-1.5 */
+      {
+        canvasId: 'ade-clip',
+        vit: {
+          label: 'CLIP L/14@336',
+          color: '#c084fc',
+          points: [
+            { layer: 0, value: 0.014943 },
+            { layer: 3, value: 0.039049 },
+            { layer: 6, value: 0.062691 },
+            { layer: 9, value: 0.116666 },
+            { layer: 12, value: 0.184831 },
+            { layer: 15, value: 0.269235 },
+            { layer: 18, value: 0.338447 },
+            { layer: 21, value: 0.336474 },
+            { layer: 23, value: 0.343455 },
+            { layer: 24, value: 0.343843 }
+          ]
+        },
+        vlm: {
+          label: 'LLaVA-1.5 (CLIP)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.32314 },
+            { layer: 4, value: 0.333616 },
+            { layer: 8, value: 0.355381 },
+            { layer: 12, value: 0.36766 },
+            { layer: 16, value: 0.379328 },
+            { layer: 20, value: 0.389039 },
+            { layer: 24, value: 0.392402 },
+            { layer: 28, value: 0.396508 },
+            { layer: 32, value: 0.395213 }
+          ]
+        }
+      },
+      /* ADE20K — DINOv2 */
+      {
+        canvasId: 'ade-dinov2',
+        vit: {
+          label: 'DINOv2',
+          color: '#c084fc',
+          points: [
+            { layer: 0, value: 0.008191 },
+            { layer: 3, value: 0.012415 },
+            { layer: 6, value: 0.018387 },
+            { layer: 9, value: 0.027071 },
+            { layer: 12, value: 0.059576 },
+            { layer: 15, value: 0.148976 },
+            { layer: 18, value: 0.314843 },
+            { layer: 21, value: 0.429185 },
+            { layer: 24, value: 0.455842 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (DINOv2)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.429001 },
+            { layer: 4, value: 0.430849 },
+            { layer: 8, value: 0.439214 },
+            { layer: 12, value: 0.443072 },
+            { layer: 16, value: 0.443914 },
+            { layer: 20, value: 0.445014 },
+            { layer: 24, value: 0.443345 },
+            { layer: 28, value: 0.441615 },
+            { layer: 32, value: 0.441058 }
+          ]
+        }
+      },
+      {
+        canvasId: 'ade-sam3',
+        vit: {
+          label: 'SAM3',
+          color: '#c084fc',
+          points: [
+            { layer: 0, value: 0.013853 },
+            { layer: 4, value: 0.071034 },
+            { layer: 8, value: 0.128986 },
+            { layer: 12, value: 0.228102 },
+            { layer: 16, value: 0.327335 },
+            { layer: 20, value: 0.390412 },
+            { layer: 24, value: 0.430779 },
+            { layer: 28, value: 0.419953 },
+            { layer: 32, value: 0.410208 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (SAM3)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.328088 },
+            { layer: 4, value: 0.332711 },
+            { layer: 8, value: 0.342811 },
+            { layer: 12, value: 0.361577 },
+            { layer: 16, value: 0.368661 },
+            { layer: 20, value: 0.382626 },
+            { layer: 24, value: 0.378938 },
+            { layer: 28, value: 0.376451 },
+            { layer: 32, value: 0.379029 }
+          ]
+        }
+      },
+      {
+        canvasId: 'ade-siglip',
+        vit: {
+          label: 'SigLIP',
+          color: '#c084fc',
+          points: [
+            { layer: 3, value: 0.040250 },
+            { layer: 6, value: 0.082699 },
+            { layer: 9, value: 0.171188 },
+            { layer: 12, value: 0.231860 },
+            { layer: 15, value: 0.304193 },
+            { layer: 18, value: 0.365262 },
+            { layer: 21, value: 0.385943 },
+            { layer: 24, value: 0.386970 },
+            { layer: 27, value: 0.372711 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (SigLIP)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.314384 },
+            { layer: 4, value: 0.326803 },
+            { layer: 8, value: 0.340073 },
+            { layer: 12, value: 0.353859 },
+            { layer: 16, value: 0.352969 },
+            { layer: 20, value: 0.353003 },
+            { layer: 24, value: 0.346452 },
+            { layer: 28, value: 0.339977 },
+            { layer: 32, value: 0.334133 }
+          ]
+        }
+      },
+
+      /* Pascal VOC — CLIP + LLaVA-1.5 (no layer-by-layer CLIP data) */
+      {
+        canvasId: 'voc-clip',
+        vlm: {
+          label: 'LLaVA-1.5 (CLIP)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.537601 },
+            { layer: 4, value: 0.54134 },
+            { layer: 8, value: 0.577033 },
+            { layer: 12, value: 0.595302 },
+            { layer: 16, value: 0.611719 },
+            { layer: 20, value: 0.663788 },
+            { layer: 24, value: 0.687389 },
+            { layer: 28, value: 0.699783 },
+            { layer: 32, value: 0.700617 }
+          ]
+        }
+      },
+      /* Pascal VOC — DINOv2 */
+      {
+        canvasId: 'voc-dinov2',
+        vit: {
+          label: 'DINOv2',
+          color: '#c084fc',
+          points: [
+            { layer: 3, value: 0.035662 },
+            { layer: 6, value: 0.037453 },
+            { layer: 9, value: 0.040554 },
+            { layer: 12, value: 0.061950 },
+            { layer: 15, value: 0.203494 },
+            { layer: 18, value: 0.512474 },
+            { layer: 21, value: 0.704018 },
+            { layer: 24, value: 0.775725 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (DINOv2)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.744905 },
+            { layer: 4, value: 0.747524 },
+            { layer: 8, value: 0.758835 },
+            { layer: 12, value: 0.763945 },
+            { layer: 16, value: 0.764437 },
+            { layer: 20, value: 0.771753 },
+            { layer: 24, value: 0.772018 },
+            { layer: 28, value: 0.775405 },
+            { layer: 32, value: 0.775069 }
+          ]
+        }
+      },
+      {
+        canvasId: 'voc-sam3',
+        vit: {
+          label: 'SAM3',
+          color: '#c084fc',
+          points: [
+            { layer: 3, value: 0.082220 },
+            { layer: 6, value: 0.129570 },
+            { layer: 9, value: 0.190578 },
+            { layer: 12, value: 0.334787 },
+            { layer: 15, value: 0.482810 },
+            { layer: 18, value: 0.579639 },
+            { layer: 21, value: 0.651498 },
+            { layer: 24, value: 0.711386 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (SAM3)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.524831 },
+            { layer: 4, value: 0.527757 },
+            { layer: 8, value: 0.545857 },
+            { layer: 12, value: 0.588145 },
+            { layer: 16, value: 0.604768 },
+            { layer: 20, value: 0.665070 },
+            { layer: 24, value: 0.667606 },
+            { layer: 28, value: 0.672864 },
+            { layer: 32, value: 0.681054 }
+          ]
+        }
+      },
+
+      /* Cityscapes — CLIP + LLaVA-1.5 (no layer-by-layer CLIP data) */
+      {
+        canvasId: 'city-clip',
+        vlm: {
+          label: 'LLaVA-1.5 (CLIP)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.457877 },
+            { layer: 4, value: 0.467598 },
+            { layer: 8, value: 0.479531 },
+            { layer: 12, value: 0.489237 },
+            { layer: 16, value: 0.495962 },
+            { layer: 20, value: 0.505527 },
+            { layer: 24, value: 0.507496 },
+            { layer: 28, value: 0.509702 },
+            { layer: 32, value: 0.50021 }
+          ]
+        }
+      },
+      /* Cityscapes — DINOv2 */
+      {
+        canvasId: 'city-dinov2',
+        vit: {
+          label: 'DINOv2',
+          color: '#c084fc',
+          points: [
+            { layer: 3, value: 0.126789 },
+            { layer: 6, value: 0.159463 },
+            { layer: 9, value: 0.181692 },
+            { layer: 12, value: 0.231437 },
+            { layer: 15, value: 0.309777 },
+            { layer: 18, value: 0.420683 },
+            { layer: 21, value: 0.553564 },
+            { layer: 24, value: 0.578535 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (DINOv2)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.567141 },
+            { layer: 4, value: 0.567806 },
+            { layer: 8, value: 0.568794 },
+            { layer: 12, value: 0.570880 },
+            { layer: 16, value: 0.571223 },
+            { layer: 20, value: 0.570804 },
+            { layer: 24, value: 0.570479 },
+            { layer: 28, value: 0.570476 },
+            { layer: 32, value: 0.566554 }
+          ]
+        }
+      },
+      {
+        canvasId: 'city-sam3',
+        vit: {
+          label: 'SAM3',
+          color: '#c084fc',
+          points: [
+            { layer: 3, value: 0.251857 },
+            { layer: 6, value: 0.299419 },
+            { layer: 9, value: 0.343094 },
+            { layer: 12, value: 0.378494 },
+            { layer: 15, value: 0.434984 },
+            { layer: 18, value: 0.478443 },
+            { layer: 21, value: 0.520193 },
+            { layer: 24, value: 0.547348 }
+          ]
+        },
+        vlm: {
+          label: 'Causal LLaVA (SAM3)',
+          color: '#6ee7ff',
+          points: [
+            { layer: 0, value: 0.497853 },
+            { layer: 4, value: 0.500348 },
+            { layer: 8, value: 0.502026 },
+            { layer: 12, value: 0.505167 },
+            { layer: 16, value: 0.502257 },
+            { layer: 20, value: 0.507758 },
+            { layer: 24, value: 0.505309 },
+            { layer: 28, value: 0.501180 },
+            { layer: 32, value: 0.493220 }
+          ]
+        }
+      }
+    ];
+
+    /* ── Fixed y-axis for all graphs ── */
+    const FIXED_Y_MIN = 0;
+    const FIXED_Y_MAX = 0.85;
+
+    /* ── Sequential Renderer ── */
+    function renderCombinedChart(chart) {
+      const canvas = document.getElementById(chart.canvasId);
+      if (!canvas) return;
+
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (!width || !height) return;
+
+      const ctx = canvas.getContext('2d');
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(ratio, ratio);
+      ctx.clearRect(0, 0, width, height);
+
+      const hasVit = !!chart.vit;
+      const hasVlm = !!chart.vlm;
+      const vitPts = hasVit ? chart.vit.points : [];
+      const vlmPts = hasVlm ? chart.vlm.points : [];
+
+      /* Build sequential position array:
+         [vit0, vit1, ..., vitN-1,  GAP,  vlm0, vlm1, ..., vlmM-1]
+         Each slot is one "tick" wide. The gap is 2 ticks wide. */
+      const GAP = 2;
+      const vitCount = vitPts.length;
+      const vlmCount = vlmPts.length;
+      const hasSequential = hasVit && hasVlm;
+      const totalSlots = hasSequential
+        ? vitCount + GAP + vlmCount
+        : (vitCount || vlmCount);
+
+      /* Layout */
+      const left = 58;
+      const right = 28;
+      const top = 38;
+      const bottom = 64;
+      const cw = width - left - right;
+      const ch = height - top - bottom;
+
+      /* Map sequential slot index to x pixel */
+      const slotToX = (slot) => {
+        if (totalSlots <= 1) return left + cw / 2;
+        return left + (cw * slot) / (totalSlots - 1);
+      };
+      const yOf = (val) => height - bottom - ((val - FIXED_Y_MIN) / (FIXED_Y_MAX - FIXED_Y_MIN)) * ch;
+
+      /* Compute positions for each point */
+      const vitPositions = vitPts.map((p, i) => ({
+        x: slotToX(i),
+        y: yOf(p.value),
+        label: String(p.layer),
+        value: p.value
+      }));
+      const vlmOffset = hasSequential ? vitCount + GAP : 0;
+      const vlmPositions = vlmPts.map((p, i) => ({
+        x: slotToX(vlmOffset + i),
+        y: yOf(p.value),
+        label: String(p.layer),
+        value: p.value
+      }));
+
+      /* Gap center x (for separator) */
+      const gapCenterX = hasSequential
+        ? (slotToX(vitCount - 1) + slotToX(vitCount + GAP)) / 2
+        : null;
+
+      /* ── Draw axes ── */
+      const axisColor = 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeStyle = axisColor;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, height - bottom);
+      ctx.lineTo(width - right, height - bottom);
+      ctx.stroke();
+
+      /* Y ticks + grid */
+      const yTicks = 5;
+      ctx.fillStyle = 'rgba(244, 246, 255, 0.65)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= yTicks; i++) {
+        const v = FIXED_Y_MIN + ((FIXED_Y_MAX - FIXED_Y_MIN) * i) / yTicks;
+        const y = yOf(v);
+        ctx.strokeStyle = axisColor;
+        ctx.beginPath();
+        ctx.moveTo(left - 6, y);
+        ctx.lineTo(left, y);
+        ctx.stroke();
+        if (i > 0) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+          ctx.beginPath();
+          ctx.moveTo(left, y);
+          ctx.lineTo(width - right, y);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.fillText(v.toFixed(2), left - 10, y);
+      }
+
+      /* X tick labels */
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(244, 246, 255, 0.6)';
+
+      const drawXTick = (x, label) => {
+        ctx.strokeStyle = axisColor;
+        ctx.beginPath();
+        ctx.moveTo(x, height - bottom);
+        ctx.lineTo(x, height - bottom + 5);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.6)';
+        ctx.fillText(label, x, height - bottom + 7);
+      };
+
+      vitPositions.forEach((p) => drawXTick(p.x, p.label));
+      vlmPositions.forEach((p) => drawXTick(p.x, p.label));
+
+      /* Section labels below tick labels */
+      ctx.font = '600 11px "Space Grotesk", Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      if (hasVit && vitPositions.length) {
+        const secX = (vitPositions[0].x + vitPositions[vitPositions.length - 1].x) / 2;
+        ctx.fillStyle = chart.vit.color;
+        ctx.fillText('ViT layers', secX, height - bottom + 22);
+      }
+      if (hasVlm && vlmPositions.length) {
+        const secX = (vlmPositions[0].x + vlmPositions[vlmPositions.length - 1].x) / 2;
+        ctx.fillStyle = chart.vlm.color;
+        ctx.fillText('LLM layers', secX, height - bottom + 22);
+      }
+
+      /* Y-axis label */
+      ctx.save();
+      ctx.translate(14, top + ch / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = 'rgba(244, 246, 255, 0.45)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('mIoU', 0, 0);
+      ctx.restore();
+
+      /* ── Gap separator ── */
+      if (gapCenterX !== null) {
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(gapCenterX, top);
+        ctx.lineTo(gapCenterX, height - bottom);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      /* ── Baseline dashed line (from data attribute) ── */
+      const baselineVal = parseFloat(canvas.dataset.baseline || '');
+      const baselineLabel = canvas.dataset.baselineLabel || '';
+      const hasBaseline = Number.isFinite(baselineVal);
+
+      /* ── Legend ── */
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = '12px Inter, sans-serif';
+      const legendY = top - 18;
+      let legendX = left;
+
+      if (hasVit) {
+        ctx.strokeStyle = chart.vit.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY);
+        ctx.lineTo(legendX + 22, legendY);
+        ctx.stroke();
+        ctx.fillStyle = chart.vit.color;
+        ctx.beginPath();
+        ctx.arc(legendX + 11, legendY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.75)';
+        ctx.fillText(chart.vit.label, legendX + 28, legendY);
+        legendX += ctx.measureText(chart.vit.label).width + 56;
+      }
+      if (hasVlm) {
+        ctx.strokeStyle = chart.vlm.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY);
+        ctx.lineTo(legendX + 22, legendY);
+        ctx.stroke();
+        ctx.fillStyle = chart.vlm.color;
+        ctx.beginPath();
+        ctx.arc(legendX + 11, legendY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.75)';
+        ctx.fillText(chart.vlm.label, legendX + 28, legendY);
+        legendX += ctx.measureText(chart.vlm.label).width + 56;
+      }
+      if (hasBaseline) {
+        ctx.save();
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY);
+        ctx.lineTo(legendX + 22, legendY);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(244, 246, 255, 0.75)';
+        const blLabel = baselineLabel
+          ? baselineLabel + ' (' + baselineVal.toFixed(3) + ')'
+          : 'Baseline (' + baselineVal.toFixed(3) + ')';
+        ctx.fillText(blLabel, legendX + 28, legendY);
+      }
+
+      /* ── Draw baseline ── */
+      if (hasBaseline) {
+        const blY = yOf(baselineVal);
+        ctx.save();
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = 'rgba(192, 132, 252, 0.6)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(left, blY);
+        ctx.lineTo(width - right, blY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      /* ── Draw transition connector (thin dashed) ── */
+      if (hasSequential && vitPositions.length && vlmPositions.length) {
+        const lastVit = vitPositions[vitPositions.length - 1];
+        const firstVlm = vlmPositions[0];
+        ctx.save();
+        ctx.setLineDash([3, 5]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(lastVit.x, lastVit.y);
+        ctx.lineTo(firstVlm.x, firstVlm.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      /* ── Draw ViT line + dots ── */
+      if (hasVit && vitPositions.length) {
+        ctx.strokeStyle = chart.vit.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        vitPositions.forEach((p, i) => {
+          if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+        ctx.fillStyle = chart.vit.color;
+        vitPositions.forEach((p) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      /* ── Draw VLM line + dots ── */
+      if (hasVlm && vlmPositions.length) {
+        ctx.strokeStyle = chart.vlm.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        vlmPositions.forEach((p, i) => {
+          if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+        ctx.fillStyle = chart.vlm.color;
+        vlmPositions.forEach((p) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+    }
+
+    /* ── Render all charts ── */
+    combinedCharts.forEach((chart) => {
+      const render = () => renderCombinedChart(chart);
+      render();
+      window.addEventListener('resize', render);
+    });
+  </script>
+</body>
+</html>
