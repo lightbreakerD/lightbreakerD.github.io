@@ -1,32 +1,375 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
-<head>
-    <title>My Portfolioo</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-    </style>
-</head>
-<body>
-    <h1>
-        Welcome, this is going to be my personal page in the future! You are a little early :D<br>
-        But feel free to check out some of my projects :)
-    </h1>
-    <br>
-    <a href="./eccv_dropoff_recovery/">Dropoff Recovery (ECCV)</a><br>
-    <a href="./3/index.html">Morph my Face into Taylor Swift!</a><br>
-    <a href="./5/index.html">How does text to image diffusion work?</a><br>
-    <a href="./6/index.html">NeRF explained</a><br>
-    <a href="./4/index.html">How does the panorama feature on our phones work?</a><br>
-    <a href="./2/index.html">This is how Google is morphing 2 single photos into a group photo</a><br>
-    <hr>
-    <a href="https://www.squareflick.com">Use the Kanban principle with QR codes to keep track of your consumable materials</a><br>
-    <a href="https://time.squareflick.com">Remember the classic hourly chime on casio watches? You can have that again with this Webapp</a><br>
-    <a href="https://restock.link">My private chatgpt</a><br>
 
-    <!-- <hr>
-    <a href="./m1/index.html">Notes</a><br> -->
+<head>
+  <title>Boyong Wu</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Boyong Wu, computer vision research on how multimodal large language models represent space.">
+
+  <!-- Isotope JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+  <script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+
+  <!-- Custom Style -->
+  <link rel="stylesheet" href="home.css">
+  <link rel="icon" type="image/png" href="icon.png">
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+    rel="stylesheet">
+  <!-- Dark mode applied before first paint to avoid a flash of the wrong theme. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var stored = null;
+      try { stored = localStorage.getItem('theme'); } catch (e) {}
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (stored === 'dark' || (!stored && prefersDark)) { root.classList.add('dark'); }
+    })();
+  </script>
+
+</head>
+
+<body id="body">
+
+  <header class="site-nav">
+    <div class="site-nav-inner">
+      <a class="site-brand" href="index.html">Boyong Wu</a>
+      <nav class="site-nav-links">
+        <a class="nav-link" href="index.html">Home</a>
+      </nav>
+      <div class="nav-right">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          <span class="theme-icon-sun">&#9728;</span>
+          <span class="theme-icon-moon">&#9789;</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="main">
+
+    <div id="intro">
+      <div id="intro-text">
+        <h1>Boyong Wu 吴博镛</h1>
+        <p>
+          Hello hello! :) I&rsquo;m a graduating M.Sc. Computer Science student at the
+          <a href="https://www.tum.de/en/">Technical University of Munich</a>. I work on multimodal
+          learning, computer vision and explainable AI, and my favourite part is putting the
+          research ideas into the pipeline that runs them.
+          <br><br>
+          I am a student researcher in the <a href="https://www.eml-munich.de">Explainable Machine
+          Learning</a> group at <a href="https://www.helmholtz-munich.de/">Helmholtz Munich</a>,
+          with <a href="https://scholar.google.com/citations?user=jQl9RtkAAAAJ&amp;hl=en">Zeynep
+          Akata</a>, where I am having an amazing time. My <a href="https://arxiv.org/abs/2603.17228">first paper</a> was recently
+          accepted at ECCV 2026, where we analysed how multimodal large language models process
+          visual information throughout their layers: why and how LLM layers progressively recover
+          visual quality, and the influence of bidirectional attention on MLLMs. I&rsquo;ve also
+          shipped software in industry, CI/CD for the Volkswagen Group In-Car App Store at
+          <a href="https://cariad.technology/">CARIAD</a>, tried building a startup called
+          <a href="https://www.squareflick.com">Squareflick</a>, and assembly line engineering at
+          <a href="https://www.audi.com/">Audi</a>.
+          <br><br>
+          Away from that I build things for the fun of it, rendering, diffusion, VR, and small web
+          tools for problems that annoy me.
+          <br><br>
+          I also like badminton, snowboarding and great food :)
+          <br><br>
+          <a href="https://github.com/lightbreakerD">Github</a>&nbsp;&nbsp;&nbsp;&nbsp;
+          <a href="https://scholar.google.com/citations?user=Jm9sq3AAAAAJ&amp;hl=en">G. Scholar</a>&nbsp;&nbsp;&nbsp;&nbsp;
+          <a href="https://www.linkedin.com/in/boyongwu/">LinkedIn</a>
+          <br><br>
+          b.wu at tum dot de
+          <br><br>
+        </p>
+      </div>
+      <div id="intro-image">
+        <img src="images/profile.jpg">
+      </div>
+    </div>
+
+    <div id="filters" class="button-group">
+      <button class="button is-checked" data-filter=".research">Highlights</button>
+      <button class="button" data-filter=".experience">Experience</button>
+      <button class="button" data-filter=".project">Projects</button>
+      <button class="button" data-filter=".product">Products</button>
+    </div>
+
+    <div class="grid">
+
+      <!-- Research -->
+      <div class="list-item research publication poster" data-category="research">
+        <a href="images/poster-dropoff.jpg" class="thumbnail">
+          <img src="images/poster-dropoff.jpg" alt="From Drop-off to Recovery poster">
+        </a>
+        <div class="project-description">
+          <h3><a href="https://arxiv.org/abs/2603.17228">From Drop-off to Recovery: A Mechanistic Analysis of
+              Segmentation in MLLMs</a></h3>
+          <p>
+            Boyong Wu, Sanghwan Kim, Zeynep Akata<br>
+            <span class="venue">European Conference on Computer Vision (ECCV) 2026</span><br>
+            <a href="https://link.springer.com/chapter/10.1007/978-3-032-37314-4_18">Springer</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
+            <a href="https://arxiv.org/abs/2603.17228">arXiv</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;
+            Code (Coming Soon)
+          </p>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="list-item experience" data-category="experience">
+
+        <div class="exp-row">
+          <img src="images/logos/siemens.png" alt="Siemens">
+          <div class="exp-content">
+            <div class="exp-date">2026 &ndash; Present</div>
+            <p class="p-exp">AI consultant in the AI and New Technologies team at
+              <a href="https://www.siemens.com/">Siemens AG</a>.</p>
+          </div>
+        </div>
+
+        <div class="exp-row">
+          <img src="images/logos/helmholtz.png" alt="Helmholtz Munich">
+          <div class="exp-content">
+            <div class="exp-date">2025 &ndash; 2026</div>
+            <p class="p-exp">Student researcher in the <a href="https://www.eml-munich.de">Explainable Machine Learning</a>
+              group at <a href="https://www.helmholtz-munich.de/">Helmholtz Munich</a>, working with
+              <a href="https://scholar.google.de/citations?user=XkqHJfYAAAAJ&amp;hl=en">Sanghwan Kim</a> and
+              <a href="https://scholar.google.com/citations?user=jQl9RtkAAAAJ&amp;hl=en">Zeynep Akata</a>
+              on multimodal learning, segmentation and explainable AI.</p>
+          </div>
+        </div>
+
+        <div class="exp-row">
+          <img src="images/logos/cariad.png" alt="CARIAD">
+          <div class="exp-content">
+            <div class="exp-date">2024</div>
+            <p class="p-exp">Software engineer at <a href="https://cariad.technology/">CARIAD SE</a>, on the
+              In-Car App Store for the Volkswagen Group. Designed and implemented the CI/CD pipelines for the
+              app store repository, and automated sprint governance and reporting pipelines using REST APIs.</p>
+          </div>
+        </div>
+
+        <div class="exp-row">
+          <img src="images/logos/audi.png" alt="Audi">
+          <div class="exp-content">
+            <div class="exp-date">2019 &ndash; 2020</div>
+            <p class="p-exp">Industrial engineering intern at <a href="https://www.audi.com/">Audi AG</a>,
+              on assembly for the A6 and A7. Devised a plan to reduce assembly time by 40% at one station by
+              evaluating assembly steps and part variance.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Projects -->
+      <div class="list-item project description" data-category="project">
+        Things I built to understand how they work, <span class="hl">each one from scratch</span>.
+      </div>
+
+      <div class="list-item project publication" data-category="project">
+        <a href="./5/index.html" class="thumbnail">
+          <img src="images/thumb-diffusion.jpg">
+        </a>
+        <div class="project-description">
+          <h3><a href="./5/index.html">How does text to image diffusion work?</a></h3>
+          <p>
+            Sampling loops, classifier-free guidance, inpainting and visual anagrams on a pretrained model,
+            then a denoising U-Net trained from scratch to show where the pictures actually come from.
+<br>
+            <a href="https://github.com/lightbreakerD/diffusion-models">Code</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item project publication" data-category="project">
+        <a href="https://github.com/lightbreakerD/Tower-Wizard" class="thumbnail">
+          <video playsinline="" muted="" autoplay="" loop="" width="480" height="360" preload="metadata">
+            <source src="images/thumb-towerwizard.mp4" type="video/mp4">
+          </video>
+        </a>
+        <div class="project-description">
+          <h3><a href="https://github.com/lightbreakerD/Tower-Wizard">Tower Wizard</a></h3>
+          <p>
+            A hand-tracked VR game for the Meta Quest: stand on a tower, cast spells with your bare hands
+            and hold off waves of monsters until the timer runs out. Built in Unity 6 with the Meta XR SDK.<br>
+            Built with a team of four<br>
+            <a href="https://github.com/lightbreakerD/Tower-Wizard">Code</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item project publication" data-category="project">
+        <a href="./3/index.html" class="thumbnail">
+          <video playsinline="" muted="" autoplay="" loop="" width="480" height="360" preload="metadata">
+            <source src="images/thumb-morph.mp4" type="video/mp4">
+          </video>
+        </a>
+        <div class="project-description">
+          <h3><a href="./3/index.html">Morph my Face into Taylor Swift!</a></h3>
+          <p>
+            Hand-labelled correspondences, Delaunay triangulation and affine warps that walk one face into
+            another, then average a population into a mean face and push past it into caricature.
+<br>
+            <a href="https://github.com/lightbreakerD/face-morphing">Code</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item project publication" data-category="project">
+        <a href="./6/index.html" class="thumbnail">
+          <video playsinline="" muted="" autoplay="" loop="" width="480" height="360" preload="metadata">
+            <source src="images/thumb-nerf.mp4" type="video/mp4">
+          </video>
+        </a>
+        <div class="project-description">
+          <h3><a href="./6/index.html">NeRF explained</a></h3>
+          <p>
+            Fitting a neural field to a single image first, then a full neural radiance field from multi-view
+            photographs, with volume rendering and novel views.
+<br>
+            <a href="https://github.com/lightbreakerD/neural-radiance-fields">Code</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item project publication" data-category="project">
+        <a href="./4/index.html" class="thumbnail">
+          <img src="images/thumb-mosaic.jpg">
+        </a>
+        <div class="project-description">
+          <h3><a href="./4/index.html">How does the panorama feature on our phones work?</a></h3>
+          <p>
+            Homographies and rectification by hand, then the automatic version: Harris corners, adaptive
+            non-maximal suppression, feature descriptors, matching and RANSAC.
+<br>
+            <a href="https://github.com/lightbreakerD/image-mosaics">Code</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item project publication" data-category="project">
+        <a href="./2/index.html" class="thumbnail">
+          <img src="images/thumb-filters.jpg">
+        </a>
+        <div class="project-description">
+          <h3><a href="./2/index.html">This is how we morph 2 single photos into a one seamlessly</a></h3>
+          <p>
+            Finite difference and derivative-of-Gaussian filters, image sharpening, hybrid images, and
+            multiresolution blending with Gaussian and Laplacian stacks.
+<br>
+            <a href="https://github.com/lightbreakerD/filters-and-frequencies">Code</a>
+          </p>
+        </div>
+      </div>
+
+
+      <!-- Products -->
+      <div class="list-item product description" data-category="product">
+        Small web tools, built because something was annoying me.
+      </div>
+
+      <div class="list-item product publication" data-category="product">
+        <div class="project-description">
+          <h3><a href="https://www.squareflick.com">Squareflick</a></h3>
+          <p>
+            Use the Kanban principle with QR codes to keep track of your consumable materials.
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item product publication" data-category="product">
+        <div class="project-description">
+          <h3><a href="https://time.squareflick.com">Squareflick Time</a></h3>
+          <p>
+            Remember the classic hourly chime on Casio watches? You can have that again, in a browser tab.
+          </p>
+        </div>
+      </div>
+
+      <div class="list-item product publication" data-category="product">
+        <div class="project-description">
+          <h3><a href="https://restock.link">restock.link</a></h3>
+          <p>
+            My private ChatGPT.
+          </p>
+        </div>
+      </div>
+
+    </div><!-- .grid -->
+
+    <div id="footer">Design and source code from <a href="https://andyzeng.github.io/">Andy's</a> site.
+      Thanks for open-sourcing.
+    </div>
+
+    <script>
+      // Isotope grid.
+      var $grid = $('.grid').isotope({
+        itemSelector: '.list-item',
+        layoutMode: 'vertical',
+        transitionDuration: 0,
+        stagger: 10,
+        initLayout: false,
+        getSortData: {
+          category: '[data-category]'
+        }
+      });
+
+      // Bind filter button click.
+      $('#filters').on('click', 'button', function () {
+        var filterValue = $(this).attr('data-filter');
+        localStorage.setItem('filterValue', filterValue);
+        $grid.isotope({ filter: filterValue });
+      });
+
+      // Change is-checked class on buttons.
+      $('.button-group').each(function (i, buttonGroup) {
+        var $buttonGroup = $(buttonGroup);
+        $buttonGroup.on('click', 'button', function () {
+          $buttonGroup.find('.is-checked').removeClass('is-checked');
+          $(this).addClass('is-checked');
+        });
+      });
+
+      function update_isotope() {
+        // Retrieve cached button click.
+        var defaultFilterValue = localStorage.getItem('filterValue');
+        var buttons = document.getElementsByClassName("button");
+        var known = false;
+        for (var b of buttons) {
+          if (b.getAttribute('data-filter') == defaultFilterValue) { known = true; }
+        }
+        if (!known) {
+          defaultFilterValue = ".research";
+        }
+        $grid.isotope({ filter: defaultFilterValue });
+        for (var currButton of buttons) {
+          if (currButton.getAttribute('data-filter') == defaultFilterValue) {
+            currButton.classList.add('is-checked');
+          } else {
+            currButton.classList.remove('is-checked');
+          }
+        }
+      }
+
+      update_isotope();
+
+      // Dark mode toggle.
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        var root = document.documentElement;
+        root.classList.toggle('dark');
+        try {
+          localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+        } catch (e) {}
+      });
+    </script>
+
+  </div><!-- #main -->
+
 </body>
+
 </html>

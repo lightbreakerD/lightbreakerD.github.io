@@ -1,0 +1,473 @@
+/* Grid, intro and list layout adapted from Andy Zeng's website (https://andyzeng.github.io/).
+   Top nav bar and dark mode adapted from Letian Wang's site (https://letian-wang.github.io/).
+   CSS Reset: http://meyerweb.com/eric/tools/css/reset */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/**************************************************/
+/* Design tokens + dark mode. */
+
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f6f6f8;
+  --text: #150c21;
+  --muted: #8a8f98;
+  --link: #146ebe;
+  --link-hover: #0d5aa0;
+  --border: #e6e6ea;
+  --highlight: #c0392b;
+}
+
+html.dark {
+  --bg: #15161b;
+  --bg-alt: #1c1d24;
+  --text: #e7e5ef;
+  --muted: #8f93a1;
+  --link: #6fb3f4;
+  --link-hover: #9ccdf7;
+  --border: #2c2d36;
+  --highlight: #ff7a6b;
+}
+
+html { background: var(--bg); }
+
+body, .site-nav, a {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/**************************************************/
+/* Top nav bar. */
+
+.site-nav {
+  width: 100%;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.site-nav-inner {
+  max-width: 54em;
+  margin: 0 auto;
+  padding: 0.9em 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Asap', roboto, sans-serif;
+}
+
+.site-brand {
+  color: var(--text) !important;
+  font-weight: 600;
+  font-size: 1.05em;
+  border: none !important;
+}
+
+.site-brand:hover { color: var(--link) !important; }
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.6em;
+}
+
+.nav-link {
+  color: var(--muted);
+  font-size: 0.95em;
+  font-weight: 500;
+  border: none !important;
+}
+
+.nav-link:hover { color: var(--text) !important; }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+
+.theme-toggle {
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  border-radius: 6px;
+  width: 2.1em;
+  height: 2.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  padding: 0;
+}
+
+.theme-toggle:hover { border-color: var(--muted); }
+
+html.dark .theme-icon-sun { display: none; }
+html:not(.dark) .theme-icon-moon { display: none; }
+
+/**************************************************/
+
+#body {
+  font-family: 'Asap', roboto, sans-serif;
+  font-size: 1em;
+  line-height: 1.5em;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#main {
+  width: 54em;
+  margin: 0px auto;
+  position: relative;
+  min-height: calc(100vh - 4em);
+}
+
+a {
+  text-decoration: none;
+  color: var(--link);
+}
+
+a:hover {
+  text-decoration: none;
+  border-bottom: 1px solid var(--link);
+}
+
+i {
+  font-style: italic;
+}
+
+b {
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 2.4em;
+  line-height: 2.4em;
+  font-weight: 500;
+}
+
+/**************************************************/
+/* Profile image and description. */
+
+#intro {
+  padding-top: 4em;
+  display: flex;
+}
+
+#intro-text {
+  width: 40em;
+  float: left;
+}
+
+#intro-image {
+  margin: 3em 0 0 2em;
+  width: 12em;
+  height: 12em;
+  float: left;
+  overflow: hidden;
+  border-radius: 1em;
+}
+
+#intro-image img {
+  width: 12em;
+}
+
+/**************************************************/
+/* Section filter buttons. */
+
+.button {
+  display: inline-block;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 1.6em;
+  line-height: 2.4em;
+  margin-top: 0.5em;
+  margin-right: 1em;
+  float: left;
+  padding: 0;
+}
+
+.button:hover {
+  color: var(--text);
+}
+
+.button:active,
+.button.is-checked {
+  color: var(--text);
+}
+
+.button-group:after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+/**************************************************/
+/* Isotope grid list of items. */
+
+.grid {
+  padding-bottom: 6em;
+}
+
+/* clear fix */
+.grid:after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.description {
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+}
+
+.list-item {
+  width: 100%;
+  line-height: 1em;
+  margin-top: 1em;
+}
+
+/* Contain the floated thumbnail + description so Isotope measures
+   each row's height correctly. */
+.list-item:after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.list-item p.date {
+  display: inline-block;
+  width: 3em;
+  color: var(--muted);
+}
+
+/**************************************************/
+/* Item details (thumbnail media, title, and description). */
+
+.thumbnail {
+  width: 18%;
+  float: left;
+  margin-right: 2%;
+}
+
+.thumbnail:hover {
+  border-bottom: none;
+}
+
+.thumbnail img,
+.thumbnail video {
+  margin-top: 0.4em;
+  border-radius: 5px;
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.venue {
+  color: var(--highlight);
+  font-weight: 700;
+  font-style: italic;
+}
+
+.hl {
+  color: var(--highlight);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1em;
+  line-height: 1.5em;
+}
+
+h3 a {
+  color: var(--text);
+}
+
+h3 a:hover {
+  color: var(--link);
+}
+
+.publication {
+  margin-bottom: 0.5em;
+}
+
+.publication p {
+  font-size: 1em;
+  line-height: 1.5em;
+  color: var(--muted);
+}
+
+.project-description {
+  width: 80%;
+  float: left;
+}
+
+/**************************************************/
+/* Subtle footer at the bottom of the page. */
+
+#footer {
+  color: var(--muted);
+  position: absolute;
+  bottom: 0;
+  line-height: 2.5em;
+}
+
+/**************************************************/
+/* Narrow screens: keep the same look, just let it fit. */
+
+@media (max-width: 56em) {
+  #main {
+    width: auto;
+    padding: 0 1.5em;
+  }
+
+  #intro {
+    padding-top: 2.5em;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+  }
+
+  #intro-text {
+    width: 100%;
+  }
+
+  #intro-image {
+    margin: 0 0 1.5em 0;
+  }
+
+  .site-nav-inner {
+    padding: 0.9em 1.5em;
+  }
+}
+
+@media (max-width: 700px) {
+  .site-nav-inner { padding: 0.8em 1.2em; }
+  .site-nav-links { gap: 1em; }
+}
+
+/**************************************************/
+/* Experience timeline (adapted from Letian Wang's site). */
+
+.experience {
+  position: relative;
+}
+
+.experience:after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  background-color: var(--border);
+  top: 0;
+  bottom: 0;
+  left: 24px;
+  margin: 34px 0;
+  z-index: 0;
+}
+
+.exp-row {
+  padding: 10px 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.exp-row img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  flex: none;
+  object-fit: contain;
+  /* Sit on top of the timeline rule so each logo reads as a node on it. */
+  position: relative;
+  z-index: 2;
+  background: var(--bg);
+}
+
+.exp-content {
+  padding: 0 0 0 1.5em;
+}
+
+.exp-date {
+  color: var(--muted);
+  font-size: 0.9em;
+  line-height: 1.5em;
+}
+
+.p-exp {
+  line-height: 1.5em;
+}
+
+/**************************************************/
+/* Wide, uncropped thumbnail for a poster. */
+
+.list-item.poster .thumbnail {
+  width: 42%;
+  margin-right: 3%;
+}
+
+.list-item.poster .thumbnail img {
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.list-item.poster .project-description {
+  width: 55%;
+}
+
+@media (max-width: 56em) {
+  .list-item.poster .thumbnail,
+  .list-item.poster .project-description {
+    width: 100%;
+    float: none;
+    margin-right: 0;
+  }
+}
